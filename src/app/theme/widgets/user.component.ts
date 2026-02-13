@@ -4,9 +4,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { debounceTime, tap } from 'rxjs';
+import { debounceTime, of, tap } from 'rxjs';
 
-import { AuthService, SettingsService, User } from '@core';
+import { SettingsService } from '@core';
 
 @Component({
   selector: 'app-user',
@@ -45,15 +45,17 @@ import { AuthService, SettingsService, User } from '@core';
 })
 export class UserComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly settings = inject(SettingsService);
 
-  user!: User;
+  user = {
+    name: 'MechApp Admin',
+    email: 'Ola',
+    avatar: 'images/mech-app-icon.png',
+  };
 
   ngOnInit(): void {
-    this.auth
-      .user()
+    of(this.user)
       .pipe(
         tap(user => (this.user = user)),
         debounceTime(10)
@@ -62,9 +64,7 @@ export class UserComponent implements OnInit {
   }
 
   logout() {
-    this.auth.logout().subscribe(() => {
-      this.router.navigateByUrl('/auth/login');
-    });
+    this.router.navigateByUrl('/dashboard');
   }
 
   restore() {

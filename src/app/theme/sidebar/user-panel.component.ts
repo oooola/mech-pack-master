@@ -1,9 +1,8 @@
-import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AuthService, User } from '@core/authentication';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -21,12 +20,10 @@ import { TranslateModule } from '@ngx-translate/core';
   encapsulation: ViewEncapsulation.None,
   imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule, TranslateModule],
 })
-export class UserPanelComponent implements OnInit {
-  private readonly auth = inject(AuthService);
-
-  user!: User;
-
-  ngOnInit(): void {
-    this.auth.user().subscribe(user => (this.user = user));
-  }
+export class UserPanelComponent {
+  user = {
+    name: 'MechApp Admin',
+    email: 'Ola',
+    avatar: 'images/mech-app-icon.png',
+  };
 }
