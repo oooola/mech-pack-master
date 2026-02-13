@@ -28,18 +28,13 @@ import {
   settingsInterceptor,
   SettingsService,
   StartupService,
-  tokenInterceptor,
   TranslateLangService,
 } from '@core';
 import { environment } from '@env/environment';
 import { PaginatorI18nService } from '@shared';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { routes } from './app.routes';
 import { FormlyConfigModule } from './formly-config';
-
-import { LoginService } from '@core/authentication/login.service';
-import { FakeLoginService } from './fake-login.service';
-import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
-
 
 // Required for AOT compilation
 function TranslateHttpLoaderFactory(http: HttpClient) {
@@ -51,7 +46,6 @@ const interceptors = [
   noopInterceptor,
   baseUrlInterceptor,
   settingsInterceptor,
-  tokenInterceptor,
   apiInterceptor,
   errorInterceptor,
   loggingInterceptor,
@@ -78,16 +72,7 @@ export const appConfig: ApplicationConfig = {
         deps: [HttpClient],
       },
     }),
-    importProvidersFrom(
-      NgxPermissionsModule.forRoot(),
-      FormlyConfigModule.forRoot()
-    ),
-    // ==================================================
-    // 👇 ❌ Remove it in the realworld application
-    //
-    { provide: LoginService, useClass: FakeLoginService },
-    //
-    // ==================================================
+    importProvidersFrom(NgxPermissionsModule.forRoot(), FormlyConfigModule.forRoot()),
     {
       provide: MatPaginatorIntl,
       deps: [PaginatorI18nService],
@@ -133,6 +118,6 @@ export const appConfig: ApplicationConfig = {
         monthYearA11yLabel: 'MMMM yyyy',
         popupHeaderDateLabel: 'MMM dd, E',
       },
-    }), provideCharts(withDefaultRegisterables()),
+    }),
   ],
 };
