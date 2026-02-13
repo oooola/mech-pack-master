@@ -49,7 +49,7 @@ describe('ErrorInterceptor', () => {
     httpMock.expectOne('/user').flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(toast.error).toHaveBeenCalledWith('401 Unauthorized');
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('should handle status code 403', () => {

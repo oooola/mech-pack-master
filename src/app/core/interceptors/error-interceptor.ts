@@ -35,9 +35,6 @@ export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn)
       } else {
         console.error('ERROR', error);
         toast.error(getMessage(error));
-        if (error.status === STATUS.UNAUTHORIZED) {
-          router.navigateByUrl('/auth/login');
-        }
       }
 
       return throwError(() => error);
