@@ -2,6 +2,7 @@
   "menu": {
     "dashboard": "数据大盘",
     "active-users": "活跃用户",
+    "company": "公司",
     "design": "设计",
     "design.colors": "颜色系统",
     "design.icons": "Material 图标库",

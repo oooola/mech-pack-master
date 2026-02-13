@@ -2,6 +2,7 @@
   "menu": {
     "dashboard": "Dashboard",
     "active-users": "Active users",
+    "company": "Company",
     "design": "Design",
     "design.colors": "Color System",
     "design.icons": "Material Icons",

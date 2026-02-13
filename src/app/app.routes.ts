@@ -3,6 +3,7 @@ import { authGuard } from '@core';
 import { AdminLayoutComponent } from '@theme/admin-layout/admin-layout.component';
 import { AuthLayoutComponent } from '@theme/auth-layout/auth-layout.component';
 import { ActiveUsersComponent } from './routes/active-users/active-users.component';
+import { CompanyComponent } from './routes/company/company.component';
 import { DashboardComponent } from './routes/dashboard/dashboard.component';
 import { Error403Component } from './routes/sessions/403.component';
 import { Error404Component } from './routes/sessions/404.component';
@@ -20,6 +21,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'dashboard/active-users', component: ActiveUsersComponent },
+      { path: 'company', component: CompanyComponent },
       { path: '403', component: Error403Component },
       { path: '404', component: Error404Component },
       { path: '500', component: Error500Component },

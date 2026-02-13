@@ -1,0 +1,157 @@
+<page-header title="menu.company" [nav]="['home', 'menu.company']" />
+
+<div class="company-search-field">
+  <span class="company-search-icon material-icons" aria-hidden="true">search</span>
+  <input
+    class="company-search-input"
+    type="text"
+    placeholder="Sök företag"
+    [value]="searchTerm"
+    (focus)="onSearchFocus($event)"
+    (input)="onSearchInput($event)"
+  />
+</div>
+
+@if (visibleCompanies.length > 0) {
+  <section class="company-list">
+    <ul class="company-list-items">
+      @for (company of visibleCompanies; track company) {
+        <li class="company-list-item" (click)="onCompanySelect(company)">{{ company }}</li>
+      }
+    </ul>
+  </section>
+}
+
+@if (selectedCompanyDetails) {
+  <section class="company-details">
+    <div class="company-details-row">
+      <span class="company-details-label">Företag</span>
+      <span class="company-details-value">{{ selectedCompanyDetails.name }}</span>
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">Licensnyckel</span>
+      <span class="company-details-value">{{ selectedCompanyDetails.licenseKey }}</span>
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">PIN-kod</span>
+      <span class="company-details-value">{{ selectedCompanyDetails.pinCode }}</span>
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">Licensstatus</span>
+      @if (isEditingLicenseStatus) {
+        <select
+          class="company-details-select"
+          [value]="licenseStatusDraft"
+          (change)="onLicenseStatusChange($event)"
+          (blur)="onLicenseStatusSave()"
+          (keydown.escape)="onLicenseStatusCancel()"
+        >
+          <option value="Aktiv">Aktiv</option>
+          <option value="Avstängd">Avstängd</option>
+        </select>
+      } @else {
+        <button
+          class="company-details-edit-button"
+          type="button"
+          (click)="onLicenseStatusEditStart()"
+          [class.company-status-suspended]="selectedCompanyDetails.licenseStatus === 'Avstängd'"
+        >
+          {{ selectedCompanyDetails.licenseStatus }}
+        </button>
+      }
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">Max antal användare</span>
+      @if (isEditingMaxUsers) {
+        <div class="company-details-edit-control">
+          <div class="company-details-stepper">
+            <button
+              type="button"
+              class="company-details-step-button"
+              (mousedown)="$event.preventDefault()"
+              (click)="onMaxUsersStep(1)"
+              aria-label="Öka antal användare"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              class="company-details-step-button"
+              (mousedown)="$event.preventDefault()"
+              (click)="onMaxUsersStep(-1)"
+              aria-label="Minska antal användare"
+            >
+              ▼
+            </button>
+          </div>
+          <input
+            class="company-details-edit-input"
+            type="number"
+            min="1"
+            [value]="maxUsersDraft"
+            (input)="onMaxUsersInput($event)"
+            (keydown.enter)="onMaxUsersSave()"
+            (keydown.escape)="onMaxUsersCancel()"
+            (blur)="onMaxUsersSave()"
+          />
+        </div>
+      } @else {
+        <button class="company-details-edit-button" type="button" (click)="onMaxUsersEditStart()">
+          {{ selectedCompanyDetails.maxUsers }}
+        </button>
+      }
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">Licens giltig till</span>
+      @if (isEditingLicenseExpiresAt) {
+        <div class="company-details-date-control">
+          <button
+            type="button"
+            class="company-details-date-button material-icons"
+            (mousedown)="$event.preventDefault()"
+            (click)="onOpenLicenseDatePicker(licenseDateInput)"
+            aria-label="Öppna datumväljare"
+          >
+            calendar_month
+          </button>
+          <input
+            #licenseDateInput
+            class="company-details-edit-input company-details-date-input"
+            [class.company-date-expired]="isLicenseExpired(licenseExpiresAtDraft)"
+            type="date"
+            [value]="licenseExpiresAtDraft"
+            (input)="onLicenseExpiresInput($event)"
+            (keydown.enter)="onLicenseExpiresSave()"
+            (keydown.escape)="onLicenseExpiresCancel()"
+            (blur)="onLicenseExpiresSave()"
+          />
+        </div>
+      } @else {
+        <button
+          class="company-details-edit-button"
+          type="button"
+          [class.company-date-expired]="isLicenseExpired(selectedCompanyDetails.licenseExpiresAt)"
+          (click)="onLicenseExpiresEditStart()"
+        >
+          {{ selectedCompanyDetails.licenseExpiresAt }}
+        </button>
+      }
+    </div>
+    <div class="company-details-actions">
+      <button class="company-secondary-button" type="button" (click)="onResetAdminPassword()">
+        Återställ Admin lösen
+      </button>
+      <button
+        class="company-primary-button"
+        type="button"
+        [disabled]="!hasPendingChanges || isUpdating"
+        (click)="onUpdateCompany()"
+      >
+        @if (isUpdating) {
+          <span class="company-button-spinner" aria-hidden="true"></span>
+        }
+        Uppdatera
+      </button>
+    </div>
+  </section>
+}

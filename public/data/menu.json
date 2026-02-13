@@ -13,6 +13,12 @@
       "icon": "groups"
     },
     {
+      "route": "company",
+      "name": "company",
+      "type": "link",
+      "icon": "apartment"
+    },
+    {
       "route": "/",
       "name": "sessions",
       "type": "sub",

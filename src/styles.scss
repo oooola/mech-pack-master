@@ -6,3 +6,7 @@
 @use 'styles/helpers';
 @use 'styles/plugins';
 @use 'styles/custom';
+
+.unsaved-changes-dialog-panel .mat-mdc-dialog-surface {
+  border: 2px solid #fff;
+}
