@@ -1,0 +1,20 @@
+@if (showHeader) {
+  <div class="matero-sidebar-header">
+    <mat-toolbar>
+      <span class="flex-fill"></span>
+
+      @if (!showToggle) {
+        <button mat-icon-button (click)="closeSidenav.emit()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-toolbar>
+  </div>
+}
+
+<div class="matero-sidebar-main">
+  @if (showUser) {
+    <app-user-panel />
+  }
+  <app-sidemenu [ripple]="showToggle" />
+</div>

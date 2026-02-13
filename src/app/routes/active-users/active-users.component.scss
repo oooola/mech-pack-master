@@ -1,0 +1,26 @@
+.active-users-chart {
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.active-users-filters {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mtkurs-checkbox {
+  color: #43a047;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #43a047;
+  --mdc-checkbox-selected-icon-color: #43a047;
+  --mdc-checkbox-selected-hover-icon-color: #43a047;
+  --mdc-checkbox-selected-focus-icon-color: #43a047;
+  --mdc-checkbox-selected-pressed-icon-color: #43a047;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.mtkurs-checkbox .mdc-label {
+  color: #43a047;
+}

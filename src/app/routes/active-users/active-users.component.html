@@ -1,0 +1,23 @@
+<page-header title="menu.dashboard" [nav]="['home', 'menu.active-users']" />
+
+<canvas
+  class="active-users-chart"
+  baseChart
+  [type]="'line'"
+  [data]="lineChartData"
+  [options]="lineChartOptions">
+</canvas>
+
+<div class="active-users-filters">
+  <mat-checkbox
+    class="mtkurs-checkbox"
+    [checked]="showMatkurs"
+    (change)="onMatkursToggle($event.checked)"
+  >
+    MätKurs
+  </mat-checkbox>
+  <mat-checkbox>IsoIntro</mat-checkbox>
+  <mat-checkbox>IsoKurs</mat-checkbox>
+  <mat-checkbox>MekMät</mat-checkbox>
+  <mat-checkbox>CncSim</mat-checkbox>
+</div>
