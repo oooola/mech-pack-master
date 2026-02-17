@@ -3,7 +3,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@shared/compat/translate';
 
 @Component({
   selector: 'app-user-panel',
@@ -18,7 +17,7 @@ import { TranslateModule } from '@shared/compat/translate';
   `,
   styleUrl: './user-panel.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule, TranslateModule],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule],
 })
 export class UserPanelComponent {
   user = {

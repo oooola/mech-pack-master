@@ -2,7 +2,6 @@ import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/co
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/bootstrap/menu.service';
-import { TranslateModule } from '@shared/compat/translate';
 import { filter, startWith } from 'rxjs';
 
 @Component({
@@ -10,7 +9,7 @@ import { filter, startWith } from 'rxjs';
   templateUrl: './breadcrumb.component.html',
   styleUrl: './breadcrumb.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [MatIconModule, TranslateModule],
+  imports: [MatIconModule],
 })
 export class BreadcrumbComponent implements OnInit {
   private readonly router = inject(Router);

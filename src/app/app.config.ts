@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
@@ -6,18 +6,13 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MAT_CARD_CONFIG } from '@angular/material/card';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideDateFnsDatetimeAdapter } from '@ng-matero/extensions-date-fns-adapter';
-import { provideTranslateService, TranslateLoader } from '@shared/compat/translate';
-import { NgxPermissionsModule } from '@shared/compat/permissions';
-
-import { SettingsService, StartupService, TranslateLangService } from '@core';
+import { SettingsService, StartupService } from '@core';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { routes } from './app.routes';
-import { OfflineTranslateLoader } from './core/bootstrap/offline-translate.loader';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideCharts(withDefaultRegisterables()),
-    provideAppInitializer(() => inject(TranslateLangService).load()),
     provideAppInitializer(() => inject(StartupService).load()),
     provideAnimationsAsync(),
     provideRouter(
@@ -25,13 +20,6 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
       withComponentInputBinding()
     ),
-    provideTranslateService({
-      loader: {
-        provide: TranslateLoader,
-        useClass: OfflineTranslateLoader,
-      },
-    }),
-    importProvidersFrom(NgxPermissionsModule.forRoot()),
     {
       provide: MAT_DATE_LOCALE,
       useFactory: () => inject(SettingsService).getLocale(),

@@ -7,7 +7,6 @@ import {
   inject,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@shared/compat/translate';
 
 import { MenuService } from '@core';
 import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
@@ -20,7 +19,7 @@ import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
     class: 'matero-page-header',
   },
   encapsulation: ViewEncapsulation.None,
-  imports: [BreadcrumbComponent, TranslateModule],
+  imports: [BreadcrumbComponent],
 })
 export class PageHeaderComponent implements OnInit {
   private readonly router = inject(Router);

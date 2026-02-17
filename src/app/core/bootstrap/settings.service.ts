@@ -2,7 +2,6 @@ import { Direction } from '@angular/cdk/bidi';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
-import { TranslateService } from '@shared/compat/translate';
 import { LocalStorageService } from '@shared';
 import { enUS, Locale, zhCN, zhTW } from 'date-fns/locale';
 import { BehaviorSubject } from 'rxjs';
@@ -15,7 +14,6 @@ export class SettingsService {
   private readonly key = 'ng-matero-settings';
 
   private readonly document = inject(DOCUMENT);
-  private readonly translate = inject(TranslateService);
   private readonly store = inject(LocalStorageService);
   private readonly mediaMatcher = inject(MediaMatcher);
 
@@ -34,10 +32,6 @@ export class SettingsService {
   languages = ['en-US', 'zh-CN', 'zh-TW'];
 
   localeMap: Record<string, Locale> = { 'en-US': enUS, 'zh-CN': zhCN, 'zh-TW': zhTW };
-
-  constructor() {
-    this.translate.addLangs(this.languages);
-  }
 
   reset() {
     this.store.remove(this.key);
@@ -93,7 +87,6 @@ export class SettingsService {
     if (language) {
       this.setOptions({ language });
     }
-    this.translate.use(this.getTranslateLang());
   }
 
   getLocale() {

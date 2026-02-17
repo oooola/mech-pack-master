@@ -3,8 +3,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { MatSidenav, MatSidenavContent, MatSidenavModule } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { NgProgressbar } from '@shared/compat/progressbar';
-import { NgProgressRouter } from '@shared/compat/progressbar';
 import { Subscription, filter } from 'rxjs';
 
 import { AppSettings, SettingsService } from '@core';
@@ -26,8 +24,6 @@ const MONITOR_MEDIAQUERY = 'screen and (min-width: 960px)';
     RouterOutlet,
     BidiModule,
     MatSidenavModule,
-    NgProgressbar,
-    NgProgressRouter,
     HeaderComponent,
     TopmenuComponent,
     SidebarComponent,

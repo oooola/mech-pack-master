@@ -10,8 +10,6 @@ import {
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@shared/compat/translate';
-import { NgxPermissionsModule } from '@shared/compat/permissions';
 
 import { MenuService } from '@core';
 import { NavAccordionItemDirective } from './nav-accordion-item.directive';
@@ -30,10 +28,8 @@ import { NavAccordionDirective } from './nav-accordion.directive';
     NgTemplateOutlet,
     RouterLink,
     RouterLinkActive,
-    NgxPermissionsModule,
     MatIconModule,
     MatRippleModule,
-    TranslateModule,
     NavAccordionDirective,
     NavAccordionItemDirective,
     NavAccordionToggleDirective,

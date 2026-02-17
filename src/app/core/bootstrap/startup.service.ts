@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { NgxPermissionsService, NgxRolesService } from '@shared/compat/permissions';
 import { Menu, MenuService } from './menu.service';
 
 const DEFAULT_MENU: Menu[] = [
@@ -51,13 +50,10 @@ const DEFAULT_MENU: Menu[] = [
 })
 export class StartupService {
   private readonly menuService = inject(MenuService);
-  private readonly permissonsService = inject(NgxPermissionsService);
-  private readonly rolesService = inject(NgxRolesService);
 
   load() {
     return new Promise<void>(resolve => {
       this.setMenu(structuredClone(DEFAULT_MENU));
-      this.setPermissions();
       resolve();
     });
   }
@@ -65,12 +61,5 @@ export class StartupService {
   private setMenu(menu: Menu[]) {
     this.menuService.addNamespace(menu, 'menu');
     this.menuService.set(menu);
-  }
-
-  private setPermissions() {
-    const permissions = ['canAdd', 'canDelete', 'canEdit', 'canRead'];
-    this.permissonsService.loadPermissions(permissions);
-    this.rolesService.flushRoles();
-    this.rolesService.addRoles({ ADMIN: permissions });
   }
 }
