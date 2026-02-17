@@ -1,40 +1,64 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
-import { map, tap } from 'rxjs';
+import { NgxPermissionsService, NgxRolesService } from '@shared/compat/permissions';
 import { Menu, MenuService } from './menu.service';
+
+const DEFAULT_MENU: Menu[] = [
+  {
+    route: 'dashboard',
+    name: 'dashboard',
+    type: 'link',
+    icon: 'dashboard',
+  },
+  {
+    route: 'dashboard/active-users',
+    name: 'active-users',
+    type: 'link',
+    icon: 'groups',
+  },
+  {
+    route: 'company',
+    name: 'company',
+    type: 'link',
+    icon: 'apartment',
+  },
+  {
+    route: '/',
+    name: 'sessions',
+    type: 'sub',
+    icon: 'question_answer',
+    children: [
+      {
+        route: '403',
+        name: '403',
+        type: 'link',
+      },
+      {
+        route: '404',
+        name: '404',
+        type: 'link',
+      },
+      {
+        route: '500',
+        name: '500',
+        type: 'link',
+      },
+    ],
+  },
+];
 
 @Injectable({
   providedIn: 'root',
 })
 export class StartupService {
-  private readonly http = inject(HttpClient);
   private readonly menuService = inject(MenuService);
   private readonly permissonsService = inject(NgxPermissionsService);
   private readonly rolesService = inject(NgxRolesService);
 
-  /**
-   * Load application menu and baseline permissions.
-   */
   load() {
     return new Promise<void>(resolve => {
-      this.http
-        .get<{ menu: Menu[] }>('data/menu.json?_t=' + Date.now())
-        .pipe(
-          map(response => response?.menu ?? []),
-          tap(menu => this.setMenu(menu))
-        )
-        .subscribe({
-          next: () => {
-            this.setPermissions();
-            resolve();
-          },
-          error: () => {
-            this.setMenu([]);
-            this.setPermissions();
-            resolve();
-          },
-        });
+      this.setMenu(structuredClone(DEFAULT_MENU));
+      this.setPermissions();
+      resolve();
     });
   }
 
