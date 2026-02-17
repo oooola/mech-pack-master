@@ -3,7 +3,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@shared/compat/translate';
 import { debounceTime, of, tap } from 'rxjs';
 
 import { SettingsService } from '@core';
@@ -18,19 +17,19 @@ import { SettingsService } from '@core';
     <mat-menu #menu="matMenu">
       <button routerLink="/profile/overview" mat-menu-item>
         <mat-icon>account_circle</mat-icon>
-        <span>{{ 'profile' | translate }}</span>
+        <span>Profile</span>
       </button>
       <button routerLink="/profile/settings" mat-menu-item>
         <mat-icon>edit</mat-icon>
-        <span>{{ 'edit_profile' | translate }}</span>
+        <span>Edit profile</span>
       </button>
       <button mat-menu-item (click)="restore()">
         <mat-icon>restore</mat-icon>
-        <span>{{ 'restore_defaults' | translate }}</span>
+        <span>Restore defaults</span>
       </button>
       <button mat-menu-item (click)="logout()">
         <mat-icon>exit_to_app</mat-icon>
-        <span>{{ 'logout' | translate }}</span>
+        <span>Logout</span>
       </button>
     </mat-menu>
   `,
@@ -41,7 +40,7 @@ import { SettingsService } from '@core';
       border-radius: 50rem;
     }
   `,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, TranslateModule],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule],
 })
 export class UserComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);

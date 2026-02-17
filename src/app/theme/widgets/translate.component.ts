@@ -4,7 +4,6 @@ import { MatPseudoCheckbox } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { SettingsService } from '@core';
-import { TranslatePipe } from '@shared/compat/translate';
 
 @Component({
   selector: 'app-translate',
@@ -17,7 +16,7 @@ import { TranslatePipe } from '@shared/compat/translate';
       @for (lang of langs; track lang.value) {
         <button mat-menu-item (click)="changeLang(lang.value)">
           <span class="d-flex justify-content-between gap-8">
-            {{ lang.name | translate }}
+            {{ lang.name }}
             @if (lang.value === options.language) {
               <mat-pseudo-checkbox state="checked" appearance="minimal" />
             }
@@ -26,7 +25,7 @@ import { TranslatePipe } from '@shared/compat/translate';
       }
     </mat-menu>
   `,
-  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatPseudoCheckbox, TranslatePipe],
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatPseudoCheckbox],
 })
 export class TranslateComponent {
   private settings = inject(SettingsService);
@@ -34,10 +33,10 @@ export class TranslateComponent {
   options = this.settings.options;
 
   langs = [
-    { value: 'en-US', name: 'en_us' },
-    { value: 'zh-CN', name: 'zh_cn' },
-    { value: 'zh-TW', name: 'zh_tw' },
-    { value: 'auto', name: 'system' },
+    { value: 'en-US', name: 'English (US)' },
+    { value: 'zh-CN', name: 'Chinese (Simplified)' },
+    { value: 'zh-TW', name: 'Chinese (Traditional)' },
+    { value: 'auto', name: 'System' },
   ];
 
   changeLang(lang: string) {
