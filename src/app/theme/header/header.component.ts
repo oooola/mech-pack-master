@@ -2,8 +2,6 @@ import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angu
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import screenfull from 'screenfull';
-
 
 @Component({
   selector: 'app-header',
@@ -25,9 +23,12 @@ export class HeaderComponent {
 
   @Output() toggleSidenav = new EventEmitter<void>();
 
-  toggleFullscreen() {
-    if (screenfull.isEnabled) {
-      screenfull.toggle();
+  async toggleFullscreen() {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
     }
+
+    await document.documentElement.requestFullscreen();
   }
 }

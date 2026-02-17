@@ -5,13 +5,11 @@ import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from 
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MAT_CARD_CONFIG } from '@angular/material/card';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { MatPaginatorIntl } from '@angular/material/paginator';
 import { provideDateFnsDatetimeAdapter } from '@ng-matero/extensions-date-fns-adapter';
 import { provideTranslateService, TranslateLoader } from '@shared/compat/translate';
 import { NgxPermissionsModule } from '@shared/compat/permissions';
 
 import { SettingsService, StartupService, TranslateLangService } from '@core';
-import { PaginatorI18nService } from '@shared';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { routes } from './app.routes';
 import { OfflineTranslateLoader } from './core/bootstrap/offline-translate.loader';
@@ -34,11 +32,6 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     importProvidersFrom(NgxPermissionsModule.forRoot()),
-    {
-      provide: MatPaginatorIntl,
-      deps: [PaginatorI18nService],
-      useFactory: (paginatorI18nSrv: PaginatorI18nService) => paginatorI18nSrv.getPaginatorIntl(),
-    },
     {
       provide: MAT_DATE_LOCALE,
       useFactory: () => inject(SettingsService).getLocale(),
