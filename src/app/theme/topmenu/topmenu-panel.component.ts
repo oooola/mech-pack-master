@@ -14,8 +14,8 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslateModule } from '@shared/compat/translate';
+import { NgxPermissionsModule } from '@shared/compat/permissions';
 import { Subscription, filter } from 'rxjs';
 
 import { MenuChildrenItem, MenuService } from '@core';

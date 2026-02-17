@@ -3,8 +3,8 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { MatSidenav, MatSidenavContent, MatSidenavModule } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { NgProgressbar } from 'ngx-progressbar';
-import { NgProgressRouter } from 'ngx-progressbar/router';
+import { NgProgressbar } from '@shared/compat/progressbar';
+import { NgProgressRouter } from '@shared/compat/progressbar';
 import { Subscription, filter } from 'rxjs';
 
 import { AppSettings, SettingsService } from '@core';

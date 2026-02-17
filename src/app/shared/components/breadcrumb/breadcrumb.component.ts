@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/co
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/bootstrap/menu.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@shared/compat/translate';
 import { filter, startWith } from 'rxjs';
 
 @Component({

@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@shared/compat/translate';
 
 import { MenuService } from '@core';
 import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';

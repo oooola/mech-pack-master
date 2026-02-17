@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MatPaginatorIntl } from '@angular/material/paginator';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService } from '@shared/compat/translate';
 
 @Injectable({
   providedIn: 'root',

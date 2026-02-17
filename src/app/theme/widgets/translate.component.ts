@@ -4,7 +4,7 @@ import { MatPseudoCheckbox } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { SettingsService } from '@core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe } from '@shared/compat/translate';
 
 @Component({
   selector: 'app-translate',
