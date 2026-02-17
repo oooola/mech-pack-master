@@ -1,4 +1,5 @@
 import { ApplicationConfig, inject, provideAppInitializer } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
@@ -14,6 +15,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideCharts(withDefaultRegisterables()),
     provideAppInitializer(() => inject(StartupService).load()),
+    provideHttpClient(),
     provideAnimationsAsync(),
     provideRouter(
       routes,

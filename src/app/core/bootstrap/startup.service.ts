@@ -21,6 +21,12 @@ const DEFAULT_MENU: Menu[] = [
     icon: 'apartment',
   },
   {
+    route: 'login',
+    name: 'login',
+    type: 'link',
+    icon: 'login',
+  },
+  {
     route: '/',
     name: 'sessions',
     type: 'sub',

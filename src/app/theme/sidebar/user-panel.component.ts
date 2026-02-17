@@ -7,13 +7,13 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-user-panel',
   template: `
-    <div class="matero-user-panel" routerLink="/profile/overview">
+    <a class="matero-user-panel" routerLink="/login">
       <img class="matero-user-panel-avatar" [src]="user.avatar" alt="avatar" width="64" />
       <div class="matero-user-panel-info">
         <h4>{{ user.name }}</h4>
         <h5>{{ user.email }}</h5>
       </div>
-    </div>
+    </a>
   `,
   styleUrl: './user-panel.component.scss',
   encapsulation: ViewEncapsulation.None,
