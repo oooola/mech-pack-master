@@ -1,7 +1,7 @@
 export class StatsUserTime {
-  userId = 0;
-  companyId = 0;
-  secUsed = 0;
-  startTS = 0;
-  endTS = 0;
+  UserId = 0;
+  CompanyId = 0;
+  SecUsed = 0;
+  StartTS = 0;
+  EndTS = 0;
 }

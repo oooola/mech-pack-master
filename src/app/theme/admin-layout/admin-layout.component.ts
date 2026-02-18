@@ -26,8 +26,7 @@ const MONITOR_MEDIAQUERY = 'screen and (min-width: 960px)';
     MatSidenavModule,
     HeaderComponent,
     TopmenuComponent,
-    SidebarComponent,
-    CustomizerComponent,
+    SidebarComponent
   ],
   host: {
     '[class.matero-content-width-fix]': 'contentWidthFix',
