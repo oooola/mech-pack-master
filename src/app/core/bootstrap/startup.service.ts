@@ -4,25 +4,25 @@ import { Menu, MenuService } from './menu.service';
 const DEFAULT_MENU: Menu[] = [
   {
     route: 'dashboard',
-    name: 'dashboard',
+    name: 'Dashboard',
     type: 'link',
     icon: 'dashboard',
   },
   {
     route: 'dashboard/active-users',
-    name: 'active-users',
+    name: 'Aktiva Användare',
     type: 'link',
     icon: 'groups',
   },
   {
     route: 'company',
-    name: 'company',
+    name: 'Företag',
     type: 'link',
     icon: 'apartment',
   },
   {
     route: 'login',
-    name: 'login',
+    name: 'Login',
     type: 'link',
     icon: 'login',
   },
@@ -65,7 +65,6 @@ export class StartupService {
   }
 
   private setMenu(menu: Menu[]) {
-    this.menuService.addNamespace(menu, 'menu');
     this.menuService.set(menu);
   }
 }

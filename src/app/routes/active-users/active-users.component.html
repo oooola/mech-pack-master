@@ -22,4 +22,21 @@
   <mat-checkbox>CncSim</mat-checkbox>
 </div>
 
-<!-- Ola test -->
+<mat-form-field class="company-dropdown" appearance="outline">
+  <mat-select [(value)]="selectedCompanyId">
+    <mat-select-trigger>
+      <div class="company-option-row company-option-row-trigger">
+        <span class="company-option-name">{{ selectedCompanyOption?.companyLabel }}</span>
+        <span class="company-option-minutes">{{ selectedCompanyOption?.minutesLabel }}</span>
+      </div>
+    </mat-select-trigger>
+    @for (companyOption of companyOptions; track companyOption.id) {
+      <mat-option [value]="companyOption.id">
+        <div class="company-option-row">
+          <span class="company-option-name">{{ companyOption.companyLabel }}</span>
+          <span class="company-option-minutes">{{ companyOption.minutesLabel }}</span>
+        </div>
+      </mat-option>
+    }
+  </mat-select>
+</mat-form-field>

@@ -1,9 +1,17 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
 import { StatsHelpers } from '@shared/helpers/stats-calc';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
+
+type CompanyOption = {
+  id: number | 'all';
+  companyLabel: string;
+  minutesLabel: string;
+};
 
 @Component({
   selector: 'app-active-users',
@@ -11,15 +19,18 @@ import { ChartConfiguration } from 'chart.js';
   styleUrl: './active-users.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [PageHeaderComponent, BaseChartDirective, MatCheckboxModule],
+  imports: [PageHeaderComponent, BaseChartDirective, MatCheckboxModule, MatFormFieldModule, MatSelectModule],
 })
 export class ActiveUsersComponent implements OnInit {
   showMatkurs = true;
+  selectedCompanyId: number | 'all' = 'all';
+  companyOptions: CompanyOption[] = [
+    { id: 'all', companyLabel: 'Alla företag', minutesLabel: '' },
+  ];
 
   private readonly globalService = inject(GlobalService);
   private readonly backendService = inject(BackendService);
-  private readonly stats = this.globalService.getStatsUserTime();
-  private readonly labels = StatsHelpers.getHorizontalDateLabels(this.stats as any, 7);
+  private readonly cdr = inject(ChangeDetectorRef);
   
   private horizontalDateLabels = new Array<string>();
 
@@ -58,29 +69,42 @@ export class ActiveUsersComponent implements OnInit {
   }
 
   async onPageLoad() {
-   
-    // Hämta statistik 
-    let stats = this.globalService.getStatsUserTime();
-    if (stats.length === 0) {
-      let ret = await this.backendService.getStatUserTime(this.globalService.getJwt());
-      this.globalService.setStatsUserTime(ret);
-      stats = this.globalService.getStatsUserTime();
+    try {
+      // Hämta statistik direkt när sidan laddas om den inte redan finns cachad.
+      let stats = this.globalService.getStatsUserTime();
+      if (stats.length === 0) {
+        const ret = await this.backendService.getStatUserTime(this.globalService.getJwt());
+        this.globalService.setStatsUserTime(ret);
+        stats = this.globalService.getStatsUserTime();
+      }
+
+      // Bygg labels och dataset från den senaste statistiken.
+      this.horizontalDateLabels = StatsHelpers.getHorizontalDateLabels(stats as any, 7);
+      const activUsersDataSet = StatsHelpers.getDataActivUsersTime(stats);
+      this.activeUsersDataset = {
+        ...this.activeUsersDataset,
+        data: StatsHelpers.timeDataSecToMin(activUsersDataSet),
+      };
+      this.setCompanyOptions(stats);
+      this.lineChartData = this.buildChartData();
+    } catch (error) {
+      console.error('Kunde inte ladda statistik till active-users.', error);
+      this.horizontalDateLabels = [];
+      this.activeUsersDataset = { ...this.activeUsersDataset, data: [] };
+      this.setCompanyOptions([]);
+      this.lineChartData = this.buildChartData();
+    } finally {
+      this.cdr.markForCheck();
     }
-    // Skap labels för den horisontala axeln X
-    this.horizontalDateLabels = StatsHelpers.getHorizontalDateLabels(this.stats as any, 7);
-    // Hämtar nummer array med hur många sammanlagda sekunder per dag som dataa innehåller
-    const activUsersDataSet = StatsHelpers.getDataActivUsersTime(stats);
-    // Sätter data till graf som minuter i stället för sekunder
-    this.activeUsersDataset.data = StatsHelpers.timeDataSecToMin(activUsersDataSet);
-    // Bygger om data
-    this.lineChartData = this.buildChartData();
-    
-    const ola = 0;
   }
 
   onMatkursToggle(checked: boolean) {
     this.showMatkurs = checked;
     this.lineChartData = this.buildChartData();
+  }
+
+  get selectedCompanyOption(): CompanyOption | undefined {
+    return this.companyOptions.find(option => option.id === this.selectedCompanyId);
   }
 
   private buildChartData(): ChartConfiguration<'line'>['data'] {
@@ -90,5 +114,40 @@ export class ActiveUsersComponent implements OnInit {
         ? [this.activeUsersDataset, this.matkursDataset]
         : [this.activeUsersDataset],
     };
+  }
+
+  private setCompanyOptions(stats: Array<{ CompanyId: number; SecUsed: number }>): void {
+    const totalSecUsedByCompany = new Map<number, number>();
+
+    for (const item of stats) {
+      if (!Number.isFinite(item.CompanyId)) {
+        continue;
+      }
+
+      const currentTotal = totalSecUsedByCompany.get(item.CompanyId) ?? 0;
+      totalSecUsedByCompany.set(item.CompanyId, currentTotal + (item.SecUsed ?? 0));
+    }
+
+    const sortedCompanyEntries = Array.from(totalSecUsedByCompany.entries())
+      .sort((a, b) => {
+        if (b[1] !== a[1]) {
+          return b[1] - a[1];
+        }
+
+        return a[0] - b[0];
+      });
+
+    this.companyOptions = [
+      { id: 'all', companyLabel: 'Alla företag', minutesLabel: '' },
+      ...sortedCompanyEntries.map(([companyId, totalSecUsed]) => {
+        const totalMinutes = Math.round(totalSecUsed / 60);
+        return {
+          id: companyId,
+          companyLabel: `Företag ${companyId}`,
+          minutesLabel: `Minuter: ${totalMinutes}`,
+        };
+      }),
+    ];
+    this.selectedCompanyId = 'all';
   }
 }
