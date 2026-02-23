@@ -1,12 +1,25 @@
 <page-header title="menu.dashboard" [nav]="['home', 'menu.active-users']" />
 
-<canvas
-  class="active-users-chart"
-  baseChart
-  [type]="'line'"
-  [data]="lineChartData"
-  [options]="lineChartOptions">
-</canvas>
+<mat-tab-group class="active-users-tabs" [(selectedIndex)]="selectedTabIndex">
+  <mat-tab label="Aktiv Tid">
+    <canvas
+      class="active-users-chart"
+      baseChart
+      [type]="'line'"
+      [data]="activeTimeChartData"
+      [options]="activeTimeChartOptions">
+    </canvas>
+  </mat-tab>
+  <mat-tab label="Aktiv Antal">
+    <canvas
+      class="active-users-chart"
+      baseChart
+      [type]="'line'"
+      [data]="activeCountChartData"
+      [options]="activeCountChartOptions">
+    </canvas>
+  </mat-tab>
+</mat-tab-group>
 
 <div class="active-users-filters">
   <mat-checkbox
@@ -23,7 +36,7 @@
 </div>
 
 <mat-form-field class="company-dropdown" appearance="outline">
-  <mat-select [(value)]="selectedCompanyId">
+  <mat-select [(value)]="selectedCompanyId" (valueChange)="onCompanySelectionChange($event)">
     <mat-select-trigger>
       <div class="company-option-row company-option-row-trigger">
         <span class="company-option-name">{{ selectedCompanyOption?.companyLabel }}</span>

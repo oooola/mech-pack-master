@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CompanyNames } from '@shared/models/company-names';
 import { LoginMasterParams } from '@shared/models/login-master-params';
 import { firstValueFrom } from 'rxjs';
 
@@ -11,6 +12,7 @@ export class BackendService {
   constructor(private http: HttpClient) {}
 
   //private baseUrl = 'https://vpsapi.mechapp.se:8081';
+  //private baseUrl = 'https://vpsapi.mechapp.se'; // Nya på standard port
   private baseUrl = 'http://localhost:5286';
   
 
@@ -56,6 +58,22 @@ export class BackendService {
 
     // Endpointen kräver auth-header; skicka tom body och headers i options.
     return firstValueFrom(this.http.post<any>(url, {}, { headers }));
+  }
+
+  public getCompanyNames(companyNames:CompanyNames[], jwt: string): Promise<any> {
+    const url = this.baseUrl + '/Master/GetCompanyNames/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getStatUserTime'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
+
+    // Endpointen kräver auth-header; skicka tom body och headers i options.
+    return firstValueFrom(this.http.post<any>(url, companyNames, { headers }));
   }
 
 

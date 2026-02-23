@@ -1,7 +1,7 @@
 .active-users-chart {
   display: block;
   width: 100%;
-  margin-bottom: 16px;
+  margin: 12px 0 0;
 }
 
 .active-users-filters {
@@ -52,4 +52,8 @@
   text-align: right;
   justify-self: end;
   white-space: nowrap;
+}
+
+.active-users-tabs {
+  margin-top: 8px;
 }
