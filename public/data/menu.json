@@ -25,6 +25,12 @@
       "icon": "monitor_heart"
     },
     {
+      "route": "overview",
+      "name": "Översikt",
+      "type": "link",
+      "icon": "insights"
+    },
+    {
       "route": "/",
       "name": "sessions",
       "type": "sub",

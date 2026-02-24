@@ -27,6 +27,12 @@ const DEFAULT_MENU: Menu[] = [
     icon: 'monitor_heart',
   },
   {
+    route: 'overview',
+    name: 'Översikt',
+    type: 'link',
+    icon: 'insights',
+  },
+  {
     route: 'login',
     name: 'Login',
     type: 'link',
