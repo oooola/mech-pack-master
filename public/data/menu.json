@@ -19,6 +19,12 @@
       "icon": "apartment"
     },
     {
+      "route": "current-status",
+      "name": "Status",
+      "type": "link",
+      "icon": "monitor_heart"
+    },
+    {
       "route": "/",
       "name": "sessions",
       "type": "sub",

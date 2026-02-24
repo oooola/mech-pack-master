@@ -3,6 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CompanyNames } from '@shared/models/company-names';
 import { LoginMasterParams } from '@shared/models/login-master-params';
+import { StatsUserTime } from '@shared/models/stats-user-time';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({
@@ -60,11 +61,11 @@ export class BackendService {
     return firstValueFrom(this.http.post<any>(url, {}, { headers }));
   }
 
-  public getStatActiveUsers(jwt: string): Promise<any> {
+  public getStatActiveUsers(jwt: string): Promise<StatsUserTime[]> {
     const url = this.baseUrl + '/Master/GetStatsActiveUsers/';
     const token = jwt?.trim();
     if (!token) {
-      return Promise.reject(new Error('JWT saknas för getStatUserTime'));
+      return Promise.reject(new Error('JWT saknas för getStatActiveUsers'));
     }
 
     const headers = new HttpHeaders({
@@ -73,7 +74,7 @@ export class BackendService {
     });
 
     // Endpointen kräver auth-header; skicka tom body och headers i options.
-    return firstValueFrom(this.http.post<any>(url, {}, { headers }));
+    return firstValueFrom(this.http.post<StatsUserTime[]>(url, {}, { headers }));
   }
 
   public getCompanyNames(companyNames:CompanyNames[], jwt: string): Promise<any> {

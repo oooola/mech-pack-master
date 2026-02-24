@@ -17,6 +17,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.settings.setDirection();
     this.settings.setTheme();
     void this.globalService.ensureAllCompanyNamesLoaded();
+    void this.globalService.ensureCurrentOnlineUsersLoaded();
   }
 
   ngAfterViewInit() {

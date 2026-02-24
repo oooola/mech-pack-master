@@ -21,6 +21,12 @@ const DEFAULT_MENU: Menu[] = [
     icon: 'apartment',
   },
   {
+    route: 'current-status',
+    name: 'Status',
+    type: 'link',
+    icon: 'monitor_heart',
+  },
+  {
     route: 'login',
     name: 'Login',
     type: 'link',

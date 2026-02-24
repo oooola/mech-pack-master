@@ -1,0 +1,24 @@
+<page-header title="Status" [nav]="['home', 'Status']" />
+
+<section class="status-table-card">
+  <table class="status-table">
+    <thead>
+      <tr>
+        <th>Företag</th>
+        <th>Ant. Inloggade</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows; track row.companyName) {
+        <tr>
+          <td>{{ row.companyName }}</td>
+          <td>{{ row.loggedInCount }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td class="status-empty" colspan="2">Inga inloggade användare</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

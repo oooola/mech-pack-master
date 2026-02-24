@@ -9,8 +9,10 @@ import { LocalStorageService } from './storage.service';
 })
 export class GlobalService {
   private statsUserTimeList: StatsUserTime[] = [];
+  private currentOnlineUsers: StatsUserTime[] = [];
   private allCompanyNames: CompanyNames[] = [];
   private companyNamesLoadPromise: Promise<CompanyNames[]> | null = null;
+  private currentOnlineUsersLoadPromise: Promise<StatsUserTime[]> | null = null;
 
   constructor(
     private readonly storageService: LocalStorageService,
@@ -27,6 +29,16 @@ export class GlobalService {
   // Ger tom lista om inget har laddats ännu.
   public getStatsUserTime(): StatsUserTime[] {
     return this.statsUserTimeList;
+  }
+
+  // Ersätter den globala listan med användare som är inloggade just nu.
+  public setCurrentOnlineUsers(users: StatsUserTime[]): void {
+    this.currentOnlineUsers = users;
+  }
+
+  // Returnerar den globala listan med användare som är inloggade just nu.
+  public getCurrentOnlineUsers(): StatsUserTime[] {
+    return this.currentOnlineUsers;
   }
 
   // Ersätter den globala listan med företag (id + namn).
@@ -75,11 +87,51 @@ export class GlobalService {
     return this.companyNamesLoadPromise;
   }
 
+  // Säkerställer att listan med aktuellt inloggade användare är laddad i cache.
+  // Återanvänder pågående request och kan tvingas ladda om.
+  public async ensureCurrentOnlineUsersLoaded(forceReload = false): Promise<StatsUserTime[]> {
+    if (!forceReload && this.currentOnlineUsers.length > 0) {
+      return this.currentOnlineUsers;
+    }
+
+    if (!forceReload && this.currentOnlineUsersLoadPromise) {
+      return this.currentOnlineUsersLoadPromise;
+    }
+
+    const jwt = this.getJwt();
+    if (jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+      return this.currentOnlineUsers;
+    }
+
+    this.currentOnlineUsersLoadPromise = this.backendService.getStatActiveUsers(jwt)
+      .then((response: unknown) => {
+        const users = this.normalizeStatsUserTimeList(response);
+        this.currentOnlineUsers = users;
+        return users;
+      })
+      .catch((error) => {
+        console.error('Kunde inte hämta aktuellt inloggade användare.', error);
+        return this.currentOnlineUsers;
+      })
+      .finally(() => {
+        this.currentOnlineUsersLoadPromise = null;
+      });
+
+    return this.currentOnlineUsersLoadPromise;
+  }
+
+  // Tvingar en uppdatering av listan med aktuellt inloggade användare.
+  // Kan kopplas till en manuell Uppdatera-knapp.
+  public refreshCurrentOnlineUsers(): Promise<StatsUserTime[]> {
+    return this.ensureCurrentOnlineUsersLoaded(true);
+  }
+
   // Sparar JWT i local storage.
   // Triggar även omladdning av företagslistan för aktuell session.
   public setJwt(jwt: string): void {
     this.storageService.set('jwt', jwt);
     void this.ensureAllCompanyNamesLoaded(true);
+    void this.ensureCurrentOnlineUsersLoaded(true);
   }
 
   // Hämtar JWT från local storage och validerar innehållet.
@@ -142,5 +194,52 @@ export class GlobalService {
 
     companies.sort((a, b) => a.CompanyName.localeCompare(b.CompanyName, 'sv'));
     return companies;
+  }
+
+  // Normaliserar backend-svar till giltiga StatsUserTime-objekt.
+  // Filtrerar bort trasiga poster.
+  private normalizeStatsUserTimeList(response: unknown): StatsUserTime[] {
+    if (!Array.isArray(response)) {
+      return [];
+    }
+
+    const users: StatsUserTime[] = [];
+    for (const item of response) {
+      const userId = Number((item as Partial<StatsUserTime>)?.UserId);
+      const companyId = Number((item as Partial<StatsUserTime>)?.CompanyId);
+      const secUsed = Number((item as Partial<StatsUserTime>)?.SecUsed);
+      const startTs = Number((item as Partial<StatsUserTime>)?.StartTS);
+      const endTs = Number((item as Partial<StatsUserTime>)?.EndTS);
+
+      if (
+        !Number.isFinite(userId) ||
+        !Number.isFinite(companyId) ||
+        !Number.isFinite(secUsed) ||
+        !Number.isFinite(startTs) ||
+        !Number.isFinite(endTs)
+      ) {
+        continue;
+      }
+
+      const s = new StatsUserTime;
+      s.CompanyId = companyId;
+      s.UserId = userId;
+      s.StartTS = startTs;
+      s.EndTS = endTs;
+      s.SecUsed = secUsed;
+      users.push(s);
+
+      /*
+      users.push({
+        UserId: userId,
+        CompanyId: companyId,
+        SecUsed: secUsed,
+        StartTS: startTs,
+        EndTS: endTs,
+      });
+      */
+    }
+
+    return users;
   }
 }
