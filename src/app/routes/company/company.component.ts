@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { GlobalService, PageHeaderComponent } from '@shared';
+import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
+import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
+import { License } from '@shared/models/license';
 import { firstValueFrom } from 'rxjs';
 import { UnsavedChangesDialogComponent } from './unsaved-changes-dialog.component';
 
@@ -23,6 +25,7 @@ interface CompanyDetails {
   imports: [PageHeaderComponent],
 })
 export class CompanyComponent implements OnInit, OnDestroy {
+  private readonly backendService = inject(BackendService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly zone = inject(NgZone);
   private readonly dialog = inject(MatDialog);
@@ -94,21 +97,44 @@ export class CompanyComponent implements OnInit, OnDestroy {
     this.startSearchMode(this.searchTerm);
   }
 
-  onCompanySelect(company: string) {
+  async onCompanySelect(company: string) {
     this.searchTerm = company;
     this.isListOpen = false;
-    this.selectedCompanyDetails = this.buildCompanyDetails(company);
-    this.originalMaxUsers = this.selectedCompanyDetails.maxUsers;
-    this.originalLicenseExpiresAt = this.selectedCompanyDetails.licenseExpiresAt;
-    this.originalLicenseStatus = this.selectedCompanyDetails.licenseStatus;
-    this.hasPendingChanges = false;
-    this.clearUpdateState();
-    this.isEditingMaxUsers = false;
-    this.isEditingLicenseExpiresAt = false;
-    this.isEditingLicenseStatus = false;
-    this.maxUsersDraft = '';
-    this.licenseExpiresAtDraft = '';
-    this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
+    this.resetEditState();
+
+    const companyId = this.companyNameEntries.find(item => item.CompanyName === company)?.CompanyId;
+    const jwt = this.globalService.getJwt();
+    if (!companyId || jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+      this.selectedCompanyDetails = null;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    try {
+      const companyResponse = await this.backendService.getCompany(companyId, jwt);
+      const companyData = Company.fromApi(companyResponse);
+      const license = this.getPrimaryLicense(companyData.licenses);
+
+      this.selectedCompanyDetails = {
+        name: companyData.Name || company,
+        licenseKey: '',
+        pinCode: companyData.Password || '',
+        licenseStatus: !companyData.Masterblock ? 'Aktiv' : 'Avstängd',
+        maxUsers: license?.NumLicenses ?? 0,
+        licenseExpiresAt: this.toDateInputValue(license?.ExpirationDate),
+      };
+
+      this.originalMaxUsers = this.selectedCompanyDetails.maxUsers;
+      this.originalLicenseExpiresAt = this.selectedCompanyDetails.licenseExpiresAt;
+      this.originalLicenseStatus = this.selectedCompanyDetails.licenseStatus;
+      this.hasPendingChanges = false;
+      this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
+    } catch (error) {
+      console.error('Kunde inte hämta företagsdata.', error);
+      this.selectedCompanyDetails = null;
+    } finally {
+      this.cdr.markForCheck();
+    }
   }
 
   onMaxUsersEditStart() {
@@ -340,44 +366,21 @@ export class CompanyComponent implements OnInit, OnDestroy {
     this.clearUpdateState();
   }
 
-  private buildCompanyDetails(company: string): CompanyDetails {
-    const seed = this.makeSeed(company);
-    const next = (value: number) => (value * 1664525 + 1013904223) >>> 0;
-    const toHex = (value: number) => value.toString(16).toUpperCase().padStart(8, '0');
-
-    const s1 = next(seed);
-    const s2 = next(s1);
-    const s3 = next(s2);
-    const s4 = next(s3);
-
-    const licenseKey = `${toHex(s1).slice(0, 4)}-${toHex(s2).slice(0, 4)}-${toHex(s3).slice(0, 4)}-${toHex(s4).slice(0, 4)}`;
-    const pinCode = String((s3 % 9000) + 1000);
-    const licenseStatus: CompanyDetails['licenseStatus'] = s1 % 5 === 0 ? 'Avstängd' : 'Aktiv';
-    const maxUsers = 10 + (s2 % 191);
-
-    const years = 1 + (s4 % 4);
-    const months = s1 % 12;
-    const days = s2 % 28;
-    const expiresDate = new Date(2026 + years, months, days + 1);
-    const licenseExpiresAt = `${expiresDate.getFullYear()}-${String(expiresDate.getMonth() + 1).padStart(2, '0')}-${String(expiresDate.getDate()).padStart(2, '0')}`;
-
-    return {
-      name: company,
-      licenseKey,
-      pinCode,
-      licenseStatus,
-      maxUsers,
-      licenseExpiresAt,
-    };
+  private getPrimaryLicense(licenses: License[]): License | null {
+    return licenses.length > 0 ? licenses[0] : null;
   }
 
-  private makeSeed(input: string) {
-    let seed = 2166136261;
-    for (const char of input) {
-      seed ^= char.charCodeAt(0);
-      seed = Math.imul(seed, 16777619);
+  private toDateInputValue(value: Date | string | null | undefined): string {
+    if (!value) {
+      return '';
     }
-    return seed >>> 0;
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
   private clearUpdateState() {
@@ -392,6 +395,10 @@ export class CompanyComponent implements OnInit, OnDestroy {
   private startSearchMode(nextSearchTerm: string) {
     this.searchTerm = nextSearchTerm;
     this.isListOpen = true;
+    this.resetEditState();
+  }
+
+  private resetEditState() {
     this.selectedCompanyDetails = null;
     this.originalMaxUsers = null;
     this.originalLicenseExpiresAt = null;
