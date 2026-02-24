@@ -60,6 +60,22 @@ export class BackendService {
     return firstValueFrom(this.http.post<any>(url, {}, { headers }));
   }
 
+  public getStatActiveUsers(jwt: string): Promise<any> {
+    const url = this.baseUrl + '/Master/GetStatsActiveUsers/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getStatUserTime'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
+
+    // Endpointen kräver auth-header; skicka tom body och headers i options.
+    return firstValueFrom(this.http.post<any>(url, {}, { headers }));
+  }
+
   public getCompanyNames(companyNames:CompanyNames[], jwt: string): Promise<any> {
     const url = this.baseUrl + '/Master/GetCompanyNames/';
     const token = jwt?.trim();
