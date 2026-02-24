@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
 import { LoginMasterParams } from '@shared/models/login-master-params';
 import { StatsUserTime } from '@shared/models/stats-user-time';
@@ -92,6 +93,23 @@ export class BackendService {
     // Endpointen kräver auth-header; skicka tom body och headers i options.
     return firstValueFrom(this.http.post<any>(url, companyNames, { headers }));
   }
+
+  public getCompany(companyId: number, jwt: string): Promise<Company> {
+    const url = this.baseUrl + '/Master/GetCompany/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getCompany'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
+
+    return firstValueFrom(this.http.post<Company>(url, companyId, { headers }));
+  }
+
+  
 
 
 

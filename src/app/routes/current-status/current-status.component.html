@@ -9,9 +9,13 @@
       </tr>
     </thead>
     <tbody>
-      @for (row of rows; track row.companyName) {
+      @for (row of rows; track row.companyId) {
         <tr>
-          <td>{{ row.companyName }}</td>
+          <td>
+            <button type="button" class="status-company-link" (click)="onCompanyClick(row.companyId)">
+              {{ row.companyName }}
+            </button>
+          </td>
           <td>{{ row.loggedInCount }}</td>
         </tr>
       } @empty {
@@ -22,3 +26,33 @@
     </tbody>
   </table>
 </section>
+
+<div class="status-table-with-label">
+  <span class="status-company-floating-name">{{ selectedCompanyName }}</span>
+  <section class="status-table-card status-table-card-with-company-name">
+    <table class="status-table">
+      <thead>
+        <tr>
+          <th>Deltagare</th>
+          <th>Grupp</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of participantRows; track row.participantName + row.groupName) {
+          <tr>
+            <td>{{ row.participantName }}</td>
+            <td>{{ row.groupName }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="status-empty" colspan="2">Klicka på ett företag</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<button type="button" class="status-refresh-button" (click)="onUpdateClick()">
+  Uppdatera
+</button>

@@ -6,6 +6,27 @@
   overflow: hidden;
 }
 
+.status-table-with-label {
+  position: relative;
+  margin-top: 20px;
+}
+
+.status-table-card-with-company-name {
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.status-company-floating-name {
+  position: absolute;
+    top: -10px;
+    left: 16px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--mat-sys-on-surface);
+    z-index: 1;
+    border: 2px #ffffff;
+}
+
 .status-table {
   width: 100%;
   border-collapse: collapse;
@@ -49,4 +70,28 @@
 
 .status-empty {
   color: var(--mat-sys-on-surface-variant);
+}
+
+.status-company-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--mat-sys-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.status-company-link:hover {
+  text-decoration: underline;
+}
+
+.status-refresh-button {
+  margin-top: 12px;
+  padding: 10px 18px;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface);
+  cursor: pointer;
 }
