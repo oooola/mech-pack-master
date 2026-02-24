@@ -3,7 +3,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { CompanyNames } from '@shared/models/company-names';
 import { StatsUserTime } from '@shared/models/stats-user-time';
 import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
 import { StatsHelpers } from '@shared/helpers/stats-calc';
@@ -25,7 +24,8 @@ type CompanyOption = {
   imports: [PageHeaderComponent, BaseChartDirective, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatTabsModule],
 })
 export class ActiveUsersComponent implements OnInit {
-  showMatkurs = true;
+  showAllPrograms = true;
+  showMatkurs = false;
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
   companyOptions: CompanyOption[] = [
@@ -135,7 +135,7 @@ export class ActiveUsersComponent implements OnInit {
       }
 
       this.allStats = stats;
-      await this.setCompanyOptions(stats);
+      this.setCompanyOptions(stats);
       this.updateChartForSelection();
     } catch (error) {
       console.error('Kunde inte ladda statistik till active-users.', error);
@@ -143,7 +143,7 @@ export class ActiveUsersComponent implements OnInit {
       this.horizontalDateLabels = [];
       this.activeUsersDataset = { ...this.activeUsersDataset, data: [] };
       this.activeUsersCountDataset = { ...this.activeUsersCountDataset, data: [] };
-      await this.setCompanyOptions([]);
+      this.setCompanyOptions([]);
       this.activeTimeChartData = this.buildActiveTimeChartData();
       this.activeCountChartData = this.buildActiveCountChartData();
     } finally {
@@ -154,6 +154,13 @@ export class ActiveUsersComponent implements OnInit {
   // Visar eller döljer MätKurs-serien i diagrammet.
   onMatkursToggle(checked: boolean) {
     this.showMatkurs = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.cdr.markForCheck();
+  }
+
+  // Visar eller döljer standard-serien för alla programtyper.
+  onAllProgramsToggle(checked: boolean) {
+    this.showAllPrograms = checked;
     this.activeTimeChartData = this.buildActiveTimeChartData();
     this.cdr.markForCheck();
   }
@@ -172,11 +179,17 @@ export class ActiveUsersComponent implements OnInit {
 
   // Bygger diagramdata för tabben Aktiv Tid.
   private buildActiveTimeChartData(): ChartConfiguration<'line'>['data'] {
+    const datasets: ChartConfiguration<'line'>['data']['datasets'] = [];
+    if (this.showAllPrograms) {
+      datasets.push(this.activeUsersDataset);
+    }
+    if (this.showMatkurs) {
+      datasets.push(this.matkursDataset);
+    }
+
     return {
       labels: this.horizontalDateLabels,
-      datasets: this.showMatkurs
-        ? [this.activeUsersDataset, this.matkursDataset]
-        : [this.activeUsersDataset],
+      datasets,
     };
   }
 
@@ -235,7 +248,7 @@ export class ActiveUsersComponent implements OnInit {
   }
 
   // Skapar och sorterar företagsalternativ med total användningstid.
-  private async setCompanyOptions(stats: Array<{ CompanyId: number; SecUsed: number }>): Promise<void> {
+  private setCompanyOptions(stats: Array<{ CompanyId: number; SecUsed: number }>): void {
     const totalSecUsedByCompany = new Map<number, number>();
 
     for (const item of stats) {
@@ -256,7 +269,7 @@ export class ActiveUsersComponent implements OnInit {
         return a[0] - b[0];
       });
 
-    const companyNameMap = await this.getCompanyNameMap(sortedCompanyEntries.map(([companyId]) => companyId));
+    const companyNameMap = this.getCompanyNameMap(sortedCompanyEntries.map(([companyId]) => companyId));
 
     this.companyOptions = [
       { id: 'all', companyLabel: 'Alla företag', minutesLabel: '' },
@@ -272,35 +285,22 @@ export class ActiveUsersComponent implements OnInit {
     this.selectedCompanyId = 'all';
   }
 
-  // Hämtar en uppslagstabell med företagsnamn per företags-id.
-  private async getCompanyNameMap(companyIds: number[]): Promise<Map<number, string>> {
+  // Hämtar en uppslagstabell med företagsnamn per företags-id från global cache.
+  private getCompanyNameMap(companyIds: number[]): Map<number, string> {
     if (companyIds.length === 0) {
-      return new Map<number, string>();
+      return new Map();
     }
 
-    const request: CompanyNames[] = companyIds.map(companyId => ({
-      CompanyId: companyId,
-      CompanyName: '',
-    }));
-
-    try {
-      const response = await this.backendService.getCompanyNames(request, this.globalService.getJwt());
-      const companyNameMap = new Map<number, string>();
-
-      if (Array.isArray(response)) {
-        for (const item of response) {
-          const companyId = Number(item?.CompanyId);
-          const companyName = typeof item?.CompanyName === 'string' ? item.CompanyName.trim() : '';
-          if (Number.isFinite(companyId) && companyName.length > 0) {
-            companyNameMap.set(companyId, companyName);
-          }
-        }
+    const companyNameMap = new Map<number, string>();
+    const allowedCompanyIds = new Set(companyIds);
+    for (const item of this.globalService.getAllCompanyNames()) {
+      const companyId = Number(item?.CompanyId);
+      const companyName = typeof item?.CompanyName === 'string' ? item.CompanyName.trim() : '';
+      if (allowedCompanyIds.has(companyId) && companyName.length > 0) {
+        companyNameMap.set(companyId, companyName);
       }
-
-      return companyNameMap;
-    } catch (error) {
-      console.error('Kunde inte hämta företagsnamn.', error);
-      return new Map<number, string>();
     }
+
+    return companyNameMap;
   }
 }

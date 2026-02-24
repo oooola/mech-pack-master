@@ -1,4 +1,4 @@
-<page-header title="menu.dashboard" [nav]="['home', 'menu.active-users']" />
+<page-header title="Aktiva Användare" [nav]="['home', 'Aktiva användare']" />
 
 <mat-tab-group class="active-users-tabs" [(selectedIndex)]="selectedTabIndex">
   <mat-tab label="Aktiv Tid">
@@ -23,6 +23,13 @@
 
 <div class="active-users-filters">
   <mat-checkbox
+    class="all-programs-checkbox"
+    [checked]="showAllPrograms"
+    (change)="onAllProgramsToggle($event.checked)"
+  >
+    Alla
+  </mat-checkbox>
+  <mat-checkbox
     class="mtkurs-checkbox"
     [checked]="showMatkurs"
     (change)="onMatkursToggle($event.checked)"
@@ -36,6 +43,7 @@
 </div>
 
 <mat-form-field class="company-dropdown" appearance="outline">
+  <mat-label>Företag</mat-label>
   <mat-select [(value)]="selectedCompanyId" (valueChange)="onCompanySelectionChange($event)">
     <mat-select-trigger>
       <div class="company-option-row company-option-row-trigger">

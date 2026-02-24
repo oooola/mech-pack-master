@@ -11,6 +11,21 @@
   margin-bottom: 14px;
 }
 
+.all-programs-checkbox {
+  color: #1976d2;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #1976d2;
+  --mdc-checkbox-selected-icon-color: #1976d2;
+  --mdc-checkbox-selected-hover-icon-color: #1976d2;
+  --mdc-checkbox-selected-focus-icon-color: #1976d2;
+  --mdc-checkbox-selected-pressed-icon-color: #1976d2;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.all-programs-checkbox .mdc-label {
+  color: #1976d2;
+}
+
 .mtkurs-checkbox {
   color: #43a047;
   font-weight: 500;

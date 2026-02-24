@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { PageHeaderComponent } from '@shared';
+import { GlobalService, PageHeaderComponent } from '@shared';
+import { CompanyNames } from '@shared/models/company-names';
 import { firstValueFrom } from 'rxjs';
 import { UnsavedChangesDialogComponent } from './unsaved-changes-dialog.component';
 
@@ -21,115 +22,14 @@ interface CompanyDetails {
   standalone: true,
   imports: [PageHeaderComponent],
 })
-export class CompanyComponent implements OnDestroy {
+export class CompanyComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly zone = inject(NgZone);
   private readonly dialog = inject(MatDialog);
+  private readonly globalService = inject(GlobalService);
   private updateTimeoutId: number | null = null;
   private discardDialogPromise: Promise<boolean> | null = null;
-
-  private readonly companies: string[] = [
-    'Arvika Automation AB',
-    'Bergslagen Bygg AB',
-    'Cederholm Consulting AB',
-    'Dalarna Drift AB',
-    'Enkoping EnergiPartner AB',
-    'Falkoping Fastighet AB',
-    'Gavle Gron Teknik AB',
-    'Halmstad Hantverk AB',
-    'Igelstrom Industri AB',
-    'Jamtland Jord AB',
-    'Kalmar Kvalitet AB',
-    'Linkoping Logistik AB',
-    'Malmo Mekanik AB',
-    'Norrsken Natverk AB',
-    'Oskarshamn Offshore AB',
-    'Pitea Process AB',
-    'Qvist Quantum AB',
-    'Radmanso Ror AB',
-    'Skaraborg Service AB',
-    'Trollhattan Transport AB',
-    'Uppsala Utveckling AB',
-    'Vastervik Varme AB',
-    'Wermland Webb AB',
-    'Ystad Ytbehandling AB',
-    'Amal Akeri AB',
-    'Angelholm Aventyr AB',
-    'Orebro Oversikt AB',
-    'Alfta Analys AB',
-    'Bjorkvik Batteri AB',
-    'Charlottenberg Chark AB',
-    'Djursholm Data AB',
-    'Eslov Elmontage AB',
-    'Finspang Fasad AB',
-    'Grums Glas AB',
-    'Hudiksvall Hydraulik AB',
-    'Insjon Innovation AB',
-    'Jokkmokk Jobbcenter AB',
-    'Karlskoga Konstruktion AB',
-    'Leksand Livs AB',
-    'Motala Miljo AB',
-    'Nora Nordic AB',
-    'Orsa Optik AB',
-    'Partille Plat AB',
-    'Ronneby Reklam AB',
-    'Sundsvall Stal AB',
-    'Trosa Tra AB',
-    'Uddevalla Underhall AB',
-    'Vaxjo Ventilation AB',
-    'Wilhelmina Work AB',
-    'Ytterby Yrkestjanst AB',
-    'Are Atervinning AB',
-    'Alvsbyn Agg och Mat AB',
-    'Ostersund Ogon AB',
-    'Arlov Affarssystem AB',
-    'Balsta Bageri AB',
-    'Cirkelstad Cargo AB',
-    'Degerfors Digital AB',
-    'Emmaboda Entreprenad AB',
-    'Flen Fiber AB',
-    'Gnesta Grund AB',
-    'Haparanda Hamn AB',
-    'Ingaro IT AB',
-    'Jarfalla Juridik AB',
-    'Knivsta Klimat AB',
-    'Laholm Larm AB',
-    'Mellerud Marin AB',
-    'Nacka Nat AB',
-    'Olofstrom Omsorg AB',
-    'Pajala Produktion AB',
-    'Rimbo Rena Rum AB',
-    'Sigtuna Software AB',
-    'Tidaholm Tryck AB',
-    'Ulricehamn Uthyrning AB',
-    'Vingaker Vision AB',
-    'Wasa Wellness AB',
-    'Ymer Ylle AB',
-    'Ahus Anga AB',
-    'Almhult Adelmetall AB',
-    'Orkelljunga Oppen Data AB',
-    'Aneby Anlaggning AB',
-    'Bollnas Bostad AB',
-    'Cramer Cykel AB',
-    'Danderyd Design AB',
-    'Eksjo Ekonomi AB',
-    'Farjestaden Farg AB',
-    'Goteborg Golv AB',
-    'Hjo Halsa AB',
-    'Irsta Infra AB',
-    'Jonkoping Jour AB',
-    'Kista Komponent AB',
-    'Lidingo Ljus AB',
-    'Mjolby Montage AB',
-    'Nynashamn Natverk AB',
-    'Oxelosund Olja AB',
-    'Pargas Planering AB',
-    'Rattvik Ravaror AB',
-    'Strangnas Sakerhet AB',
-    'Trelleborg Teknik AB',
-    'Umea Utemiljo AB',
-    'Vasteras Verkstad AB',
-  ];
+  private companyNameEntries: CompanyNames[] = [];
 
   searchTerm = '';
   isListOpen = true;
@@ -146,7 +46,11 @@ export class CompanyComponent implements OnDestroy {
   licenseExpiresAtDraft = '';
   licenseStatusDraft: CompanyDetails['licenseStatus'] = 'Aktiv';
 
-  private readonly sortedCompanies = [...this.companies].sort((a, b) => a.localeCompare(b, 'sv'));
+  async ngOnInit(): Promise<void> {
+    await this.globalService.ensureAllCompanyNamesLoaded();
+    this.companyNameEntries = this.globalService.getAllCompanyNames();
+    this.cdr.markForCheck();
+  }
 
   get visibleCompanies() {
     if (!this.isListOpen) {
@@ -155,10 +59,12 @@ export class CompanyComponent implements OnDestroy {
 
     const term = this.searchTerm.trim().toLocaleLowerCase('sv');
     if (!term) {
-      return this.sortedCompanies.slice(0, 10);
+      return this.companyNameEntries.map(company => company.CompanyName);
     }
 
-    return this.sortedCompanies.filter(company => company.toLocaleLowerCase('sv').includes(term));
+    return this.companyNameEntries
+      .filter(company => company.CompanyName.toLocaleLowerCase('sv').includes(term))
+      .map(company => company.CompanyName);
   }
 
   async onSearchInput(event: Event) {
