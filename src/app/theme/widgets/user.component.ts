@@ -48,7 +48,7 @@ export class UserComponent implements OnInit {
   private readonly settings = inject(SettingsService);
 
   user = {
-    name: 'MechApp Admin',
+    name: 'MechApp Master',
     email: 'Ola',
     avatar: 'images/mech-app-icon.png',
   };

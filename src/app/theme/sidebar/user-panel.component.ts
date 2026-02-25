@@ -21,7 +21,7 @@ import { RouterLink } from '@angular/router';
 })
 export class UserPanelComponent {
   user = {
-    name: 'MechApp Admin',
+    name: 'MechApp Master',
     email: 'Ola',
     avatar: 'images/mech-app-icon.png',
   };

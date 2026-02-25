@@ -3,10 +3,10 @@ import { Menu, MenuService } from './menu.service';
 
 const DEFAULT_MENU: Menu[] = [
   {
-    route: 'dashboard',
-    name: 'Dashboard',
+    route: 'current-status',
+    name: 'Status',
     type: 'link',
-    icon: 'dashboard',
+    icon: 'monitor_heart',
   },
   {
     route: 'dashboard/active-users',
@@ -15,22 +15,16 @@ const DEFAULT_MENU: Menu[] = [
     icon: 'groups',
   },
   {
-    route: 'company',
-    name: 'Företag',
-    type: 'link',
-    icon: 'apartment',
-  },
-  {
-    route: 'current-status',
-    name: 'Status',
-    type: 'link',
-    icon: 'monitor_heart',
-  },
-  {
     route: 'overview',
     name: 'Översikt',
     type: 'link',
     icon: 'insights',
+  },
+  {
+    route: 'company',
+    name: 'Företag',
+    type: 'link',
+    icon: 'apartment',
   },
   {
     route: 'login',
@@ -40,7 +34,7 @@ const DEFAULT_MENU: Menu[] = [
   },
   {
     route: '/',
-    name: 'sessions',
+    name: 'Sessions',
     type: 'sub',
     icon: 'question_answer',
     children: [
