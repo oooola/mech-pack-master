@@ -1,8 +1,9 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { GlobalService } from '@shared';
 
 @Component({
   selector: 'app-user-panel',
@@ -11,7 +12,7 @@ import { RouterLink } from '@angular/router';
       <img class="matero-user-panel-avatar" [src]="user.avatar" alt="avatar" width="64" />
       <div class="matero-user-panel-info">
         <h4>{{ user.name }}</h4>
-        <h5>{{ user.email }}</h5>
+        <h5>{{ displayName }}</h5>
       </div>
     </a>
   `,
@@ -20,9 +21,14 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule],
 })
 export class UserPanelComponent {
+  private readonly globalService = inject(GlobalService);
+
   user = {
     name: 'MechApp Master',
-    email: 'Ola',
     avatar: 'images/mech-app-icon.png',
   };
+
+  get displayName(): string {
+    return this.globalService.getLoginDisplayName();
+  }
 }

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from '@core/guards/auth.guard';
 import { AdminLayoutComponent } from '@theme/admin-layout/admin-layout.component';
 import { ActiveUsersComponent } from './routes/active-users/active-users.component';
 import { CompanyComponent } from './routes/company/company.component';
@@ -14,6 +15,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
+    canActivateChild: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },

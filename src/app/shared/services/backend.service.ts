@@ -3,8 +3,10 @@ import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
+import { CompanySettings } from '@shared/models/company-settings';
 import { LoginMasterParams } from '@shared/models/login-master-params';
 import { StatsUserTime } from '@shared/models/stats-user-time';
+import { testConnection as TestConnection } from '@shared/models/test-connection';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({
@@ -16,7 +18,12 @@ export class BackendService {
   //private baseUrl = 'https://vpsapi.mechapp.se:8081';
   //private baseUrl = 'https://vpsapi.mechapp.se'; // Nya på standard port
   private baseUrl = 'http://localhost:5286';
-  
+
+  // Return "OK" string from server
+  public testConnection(): Promise<TestConnection> {
+    const url = this.baseUrl + '/Public/TestConnection/';
+    return firstValueFrom(this.http.get<TestConnection>(url));
+  }
 
   public masterLogin(username: string, password: string): Promise<any> {
     const url = this.baseUrl + '/Public/LoginMaster/';
@@ -29,7 +36,7 @@ export class BackendService {
     lp.password = password;
     lp.userName = username;
 
-    return this.http.post<any>(url, lp, { headers }).toPromise();
+    return firstValueFrom(this.http.post<any>(url, lp, { headers }));
   }
 
   public masterLogin2(username: string, password: string): Promise<any> {
@@ -58,7 +65,6 @@ export class BackendService {
       Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
     });
 
-    // Endpointen kräver auth-header; skicka tom body och headers i options.
     return firstValueFrom(this.http.post<any>(url, {}, { headers }));
   }
 
@@ -74,11 +80,10 @@ export class BackendService {
       Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
     });
 
-    // Endpointen kräver auth-header; skicka tom body och headers i options.
     return firstValueFrom(this.http.post<StatsUserTime[]>(url, {}, { headers }));
   }
 
-  public getCompanyNames(companyNames:CompanyNames[], jwt: string): Promise<any> {
+  public getCompanyNames(companyNames: CompanyNames[], jwt: string): Promise<any> {
     const url = this.baseUrl + '/Master/GetCompanyNames/';
     const token = jwt?.trim();
     if (!token) {
@@ -90,7 +95,6 @@ export class BackendService {
       Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
     });
 
-    // Endpointen kräver auth-header; skicka tom body och headers i options.
     return firstValueFrom(this.http.post<any>(url, companyNames, { headers }));
   }
 
@@ -109,8 +113,48 @@ export class BackendService {
     return firstValueFrom(this.http.post<Company>(url, companyId, { headers }));
   }
 
-  
+  public getCompanyKeyFromId(companyId: number, jwt: string): Promise<string> {
+    const url = this.baseUrl + '/Master/GetCompanyKey/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getCompany'));
+    }
 
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
 
+    return firstValueFrom(this.http.post(url, companyId, { headers, responseType: 'text' }));
+  }
 
+  public setCompanySettings(cs: CompanySettings, jwt: string): Promise<any> {
+    const url = this.baseUrl + '/Master/SetCompanySettings/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getCompany'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
+
+    return firstValueFrom(this.http.post(url, cs, { headers, responseType: 'text' }));
+  }
+
+  public resetAdminPassword(comapnyId: number, jwt: string): Promise<any> {
+    const url = this.baseUrl + '/Master/ResetAdminPassword/';
+    const token = jwt?.trim();
+    if (!token) {
+      return Promise.reject(new Error('JWT saknas för getCompany'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    });
+
+    return firstValueFrom(this.http.post(url, comapnyId, { headers, responseType: 'text' }));
+  }
 }

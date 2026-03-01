@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { GlobalService } from '@shared';
 import { Menu, MenuService } from './menu.service';
 
 const DEFAULT_MENU: Menu[] = [
@@ -62,10 +63,12 @@ const DEFAULT_MENU: Menu[] = [
 })
 export class StartupService {
   private readonly menuService = inject(MenuService);
+  private readonly globalService = inject(GlobalService);
 
   load() {
     return new Promise<void>(resolve => {
       this.setMenu(structuredClone(DEFAULT_MENU));
+      this.globalService.restoreLoginDisplayName();
       resolve();
     });
   }
