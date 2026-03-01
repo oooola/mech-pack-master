@@ -28,7 +28,21 @@
   <section class="company-details">
     <div class="company-details-row">
       <span class="company-details-label">Företag</span>
-      <span class="company-details-value">{{ selectedCompanyDetails.name }}</span>
+      @if (isEditingName) {
+        <input
+          class="company-details-inline-input"
+          type="text"
+          [value]="nameDraft"
+          (input)="onNameInput($event)"
+          (keydown.enter)="onNameSave()"
+          (keydown.escape)="onNameCancel()"
+          (blur)="onNameSave()"
+        />
+      } @else {
+        <button class="company-details-edit-button" type="button" (click)="onNameEditStart()">
+          {{ selectedCompanyDetails.name || '-' }}
+        </button>
+      }
     </div>
     <div class="company-details-row">
       <span class="company-details-label">Licensnyckel</span>
@@ -37,6 +51,24 @@
     <div class="company-details-row">
       <span class="company-details-label">PIN-kod</span>
       <span class="company-details-value">{{ selectedCompanyDetails.pinCode }}</span>
+    </div>
+    <div class="company-details-row">
+      <span class="company-details-label">Kundnummer</span>
+      @if (isEditingCustomerNumber) {
+        <input
+          class="company-details-inline-input"
+          type="text"
+          [value]="customerNumberDraft"
+          (input)="onCustomerNumberInput($event)"
+          (keydown.enter)="onCustomerNumberSave()"
+          (keydown.escape)="onCustomerNumberCancel()"
+          (blur)="onCustomerNumberSave()"
+        />
+      } @else {
+        <button class="company-details-edit-button" type="button" (click)="onCustomerNumberEditStart()">
+          {{ selectedCompanyDetails.customerNumber || '-' }}
+        </button>
+      }
     </div>
     <div class="company-details-row">
       <span class="company-details-label">Licensstatus</span>
@@ -140,7 +172,7 @@
       }
     </div>
     <div class="company-details-actions">
-      <button class="company-secondary-button" type="button" (click)="onResetAdminPassword()">
+      <button class="company-secondary-button" type="button" [disabled]="isUpdating" (click)="onResetAdminPassword()">
         Återställ Admin lösen
       </button>
       <button

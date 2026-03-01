@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
 import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
+import { CompanySettings } from '@shared/models/company-settings';
 import { License } from '@shared/models/license';
 import { firstValueFrom } from 'rxjs';
 import { UnsavedChangesDialogComponent } from './unsaved-changes-dialog.component';
@@ -11,6 +12,7 @@ interface CompanyDetails {
   name: string;
   licenseKey: string;
   pinCode: string;
+  customerNumber: string;
   licenseStatus: 'Aktiv' | 'Avstängd';
   maxUsers: number;
   licenseExpiresAt: string;
@@ -27,24 +29,29 @@ interface CompanyDetails {
 export class CompanyComponent implements OnInit, OnDestroy {
   private readonly backendService = inject(BackendService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly zone = inject(NgZone);
   private readonly dialog = inject(MatDialog);
   private readonly globalService = inject(GlobalService);
-  private updateTimeoutId: number | null = null;
   private discardDialogPromise: Promise<boolean> | null = null;
   private companyNameEntries: CompanyNames[] = [];
+  private selectedCompanyId: number | null = null;
 
   searchTerm = '';
   isListOpen = true;
   selectedCompanyDetails: CompanyDetails | null = null;
+  originalName: string | null = null;
+  originalCustomerNumber: string | null = null;
   originalMaxUsers: number | null = null;
   originalLicenseExpiresAt: string | null = null;
   originalLicenseStatus: CompanyDetails['licenseStatus'] | null = null;
   hasPendingChanges = false;
   isUpdating = false;
+  isEditingName = false;
+  isEditingCustomerNumber = false;
   isEditingMaxUsers = false;
   isEditingLicenseExpiresAt = false;
   isEditingLicenseStatus = false;
+  nameDraft = '';
+  customerNumberDraft = '';
   maxUsersDraft = '';
   licenseExpiresAtDraft = '';
   licenseStatusDraft: CompanyDetails['licenseStatus'] = 'Aktiv';
@@ -105,20 +112,25 @@ export class CompanyComponent implements OnInit, OnDestroy {
     const companyId = this.companyNameEntries.find(item => item.CompanyName === company)?.CompanyId;
     const jwt = this.globalService.getJwt();
     if (!companyId || jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+      this.selectedCompanyId = null;
       this.selectedCompanyDetails = null;
       this.cdr.markForCheck();
       return;
     }
 
     try {
-      const companyResponse = await this.backendService.getCompany(companyId, jwt);
+      const [companyResponse, companyKey] = await Promise.all([
+        this.backendService.getCompany(companyId, jwt),
+        this.backendService.getCompanyKeyFromId(companyId, jwt),
+      ]);
       const companyData = Company.fromApi(companyResponse);
       const license = this.getPrimaryLicense(companyData.licenses);
 
       this.selectedCompanyDetails = {
         name: companyData.Name || company,
-        licenseKey: '',
+        licenseKey: companyKey || '',
         pinCode: companyData.Password || '',
+        customerNumber: companyData.Kundnr || '',
         licenseStatus: !companyData.Masterblock ? 'Aktiv' : 'Avstängd',
         maxUsers: license?.NumLicenses ?? 0,
         licenseExpiresAt: this.toDateInputValue(license?.ExpirationDate),
@@ -127,10 +139,14 @@ export class CompanyComponent implements OnInit, OnDestroy {
       this.originalMaxUsers = this.selectedCompanyDetails.maxUsers;
       this.originalLicenseExpiresAt = this.selectedCompanyDetails.licenseExpiresAt;
       this.originalLicenseStatus = this.selectedCompanyDetails.licenseStatus;
+      this.originalName = this.selectedCompanyDetails.name;
+      this.originalCustomerNumber = this.selectedCompanyDetails.customerNumber;
+      this.selectedCompanyId = companyId;
       this.hasPendingChanges = false;
       this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
     } catch (error) {
       console.error('Kunde inte hämta företagsdata.', error);
+      this.selectedCompanyId = null;
       this.selectedCompanyDetails = null;
     } finally {
       this.cdr.markForCheck();
@@ -142,6 +158,12 @@ export class CompanyComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isEditingName) {
+      this.onNameSave();
+    }
+    if (this.isEditingCustomerNumber) {
+      this.onCustomerNumberSave();
+    }
     if (this.isEditingLicenseExpiresAt) {
       this.onLicenseExpiresSave();
     }
@@ -204,6 +226,12 @@ export class CompanyComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isEditingName) {
+      this.onNameSave();
+    }
+    if (this.isEditingCustomerNumber) {
+      this.onCustomerNumberSave();
+    }
     if (this.isEditingMaxUsers) {
       this.onMaxUsersSave();
     }
@@ -253,6 +281,12 @@ export class CompanyComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isEditingName) {
+      this.onNameSave();
+    }
+    if (this.isEditingCustomerNumber) {
+      this.onCustomerNumberSave();
+    }
     if (this.isEditingMaxUsers) {
       this.onMaxUsersSave();
     }
@@ -314,11 +348,38 @@ export class CompanyComponent implements OnInit, OnDestroy {
     return today > expiresAt;
   }
 
-  onResetAdminPassword() {
-    // Placeholder for integration to backend action.
+  async onResetAdminPassword() {
+    if (!this.selectedCompanyId || !this.searchTerm.trim()) {
+      return;
+    }
+
+    const jwt = this.globalService.getJwt();
+    if (jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+      return;
+    }
+
+    try {
+      this.isUpdating = true;
+      this.cdr.markForCheck();
+
+      await this.backendService.resetAdminPassword(this.selectedCompanyId, jwt);
+      await this.onCompanySelect(this.searchTerm);
+    } catch (error) {
+      console.error('Kunde inte återställa admin-lösenord.', error);
+    } finally {
+      this.isUpdating = false;
+      this.cdr.markForCheck();
+    }
   }
 
-  onUpdateCompany() {
+  onNameEditStart() {
+    if (!this.selectedCompanyDetails) {
+      return;
+    }
+
+    if (this.isEditingCustomerNumber) {
+      this.onCustomerNumberSave();
+    }
     if (this.isEditingMaxUsers) {
       this.onMaxUsersSave();
     }
@@ -329,41 +390,185 @@ export class CompanyComponent implements OnInit, OnDestroy {
       this.onLicenseStatusSave();
     }
 
-    if (!this.selectedCompanyDetails || this.isUpdating || !this.hasPendingChanges) {
+    this.isEditingName = true;
+    this.nameDraft = this.selectedCompanyDetails.name;
+  }
+
+  onNameInput(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    this.nameDraft = input?.value ?? '';
+    this.updatePendingChangesForNameDraft();
+  }
+
+  onNameSave() {
+    if (!this.selectedCompanyDetails) {
       return;
     }
 
-    this.clearUpdateState();
+    this.selectedCompanyDetails = {
+      ...this.selectedCompanyDetails,
+      name: this.nameDraft.trim(),
+    };
+    this.isEditingName = false;
+    this.nameDraft = '';
+    this.updatePendingChanges();
+  }
+
+  onNameCancel() {
+    this.isEditingName = false;
+    this.nameDraft = '';
+    this.updatePendingChanges();
+  }
+
+  onCustomerNumberEditStart() {
+    if (!this.selectedCompanyDetails) {
+      return;
+    }
+
+    if (this.isEditingMaxUsers) {
+      this.onMaxUsersSave();
+    }
+    if (this.isEditingLicenseExpiresAt) {
+      this.onLicenseExpiresSave();
+    }
+    if (this.isEditingLicenseStatus) {
+      this.onLicenseStatusSave();
+    }
+
+    this.isEditingCustomerNumber = true;
+    this.customerNumberDraft = this.selectedCompanyDetails.customerNumber;
+  }
+
+  onCustomerNumberInput(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    this.customerNumberDraft = input?.value ?? '';
+    this.updatePendingChangesForCustomerNumberDraft();
+  }
+
+  onCustomerNumberSave() {
+    if (!this.selectedCompanyDetails) {
+      return;
+    }
+
+    this.selectedCompanyDetails = {
+      ...this.selectedCompanyDetails,
+      customerNumber: this.customerNumberDraft.trim(),
+    };
+    this.isEditingCustomerNumber = false;
+    this.customerNumberDraft = '';
+    this.updatePendingChanges();
+  }
+
+  onCustomerNumberCancel() {
+    this.isEditingCustomerNumber = false;
+    this.customerNumberDraft = '';
+    this.updatePendingChanges();
+  }
+
+  async onUpdateCompany() {
+    if (this.isEditingName) {
+      this.onNameSave();
+    }
+    if (this.isEditingCustomerNumber) {
+      this.onCustomerNumberSave();
+    }
+    if (this.isEditingMaxUsers) {
+      this.onMaxUsersSave();
+    }
+    if (this.isEditingLicenseExpiresAt) {
+      this.onLicenseExpiresSave();
+    }
+    if (this.isEditingLicenseStatus) {
+      this.onLicenseStatusSave();
+    }
+
+    if (!this.selectedCompanyDetails || !this.selectedCompanyId || this.isUpdating || !this.hasPendingChanges) {
+      return;
+    }
+
     this.isUpdating = true;
     this.cdr.markForCheck();
-    this.updateTimeoutId = window.setTimeout(() => {
-      this.zone.run(() => {
-        if (!this.selectedCompanyDetails) {
-          this.isUpdating = false;
-          this.updateTimeoutId = null;
-          this.cdr.markForCheck();
-          return;
-        }
 
+    try {
+      const jwt = this.globalService.getJwt();
+      if (jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+        throw new Error('JWT saknas eller har gått ut.');
+      }
+
+      const companyKey = await this.backendService.getCompanyKeyFromId(this.selectedCompanyId, jwt);
+      const settings = new CompanySettings();
+      settings.Key = companyKey;
+      settings.id = this.selectedCompanyId;
+
+      const hasMaxUsersChanges =
+        this.originalMaxUsers !== null && this.selectedCompanyDetails.maxUsers !== this.originalMaxUsers;
+      const hasLicenseExpiryChanges =
+        this.originalLicenseExpiresAt !== null &&
+        this.selectedCompanyDetails.licenseExpiresAt !== this.originalLicenseExpiresAt;
+      const hasNameChanges =
+        this.originalName !== null &&
+        this.selectedCompanyDetails.name !== this.originalName;
+      const hasCustomerNumberChanges =
+        this.originalCustomerNumber !== null &&
+        this.selectedCompanyDetails.customerNumber !== this.originalCustomerNumber;
+
+      if (hasNameChanges) {
+        settings.Name = this.selectedCompanyDetails.name;
+      }
+      if (hasCustomerNumberChanges) {
+        settings.CustomerNumber = this.selectedCompanyDetails.customerNumber;
+      }
+
+      if (hasMaxUsersChanges) {
+        settings.NumLicenses = this.selectedCompanyDetails.maxUsers;
+      }
+
+      if (hasLicenseExpiryChanges) {
+        settings.ExpirationDate = this.selectedCompanyDetails.licenseExpiresAt;
+      }
+
+      await this.backendService.setCompanySettings(settings, jwt);
+
+      if (hasMaxUsersChanges) {
         this.originalMaxUsers = this.selectedCompanyDetails.maxUsers;
+      }
+      if (hasLicenseExpiryChanges) {
         this.originalLicenseExpiresAt = this.selectedCompanyDetails.licenseExpiresAt;
-        this.originalLicenseStatus = this.selectedCompanyDetails.licenseStatus;
-        this.hasPendingChanges = false;
-        this.isEditingMaxUsers = false;
-        this.isEditingLicenseExpiresAt = false;
-        this.isEditingLicenseStatus = false;
-        this.maxUsersDraft = '';
-        this.licenseExpiresAtDraft = '';
-        this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
-        this.isUpdating = false;
-        this.updateTimeoutId = null;
-        this.cdr.markForCheck();
-      });
-    }, 2000);
+      }
+      if (hasNameChanges) {
+        this.originalName = this.selectedCompanyDetails.name;
+        this.searchTerm = this.selectedCompanyDetails.name;
+        this.companyNameEntries = this.companyNameEntries.map(item =>
+          item.CompanyId === this.selectedCompanyId
+            ? { ...item, CompanyName: this.selectedCompanyDetails?.name ?? item.CompanyName }
+            : item
+        );
+      }
+      if (hasCustomerNumberChanges) {
+        this.originalCustomerNumber = this.selectedCompanyDetails.customerNumber;
+      }
+
+      this.isEditingName = false;
+      this.isEditingCustomerNumber = false;
+      this.isEditingMaxUsers = false;
+      this.isEditingLicenseExpiresAt = false;
+      this.isEditingLicenseStatus = false;
+      this.nameDraft = '';
+      this.customerNumberDraft = '';
+      this.maxUsersDraft = '';
+      this.licenseExpiresAtDraft = '';
+      this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
+      this.updatePendingChanges();
+    } catch (error) {
+      console.error('Kunde inte uppdatera företagsinställningar.', error);
+    } finally {
+      this.isUpdating = false;
+      this.cdr.markForCheck();
+    }
   }
 
   ngOnDestroy() {
-    this.clearUpdateState();
+    this.isUpdating = false;
   }
 
   private getPrimaryLicense(licenses: License[]): License | null {
@@ -384,10 +589,6 @@ export class CompanyComponent implements OnInit, OnDestroy {
   }
 
   private clearUpdateState() {
-    if (this.updateTimeoutId !== null) {
-      window.clearTimeout(this.updateTimeoutId);
-      this.updateTimeoutId = null;
-    }
     this.isUpdating = false;
     this.cdr.markForCheck();
   }
@@ -399,15 +600,22 @@ export class CompanyComponent implements OnInit, OnDestroy {
   }
 
   private resetEditState() {
+    this.selectedCompanyId = null;
     this.selectedCompanyDetails = null;
+    this.originalName = null;
+    this.originalCustomerNumber = null;
     this.originalMaxUsers = null;
     this.originalLicenseExpiresAt = null;
     this.originalLicenseStatus = null;
     this.hasPendingChanges = false;
     this.clearUpdateState();
+    this.isEditingName = false;
+    this.isEditingCustomerNumber = false;
     this.isEditingMaxUsers = false;
     this.isEditingLicenseExpiresAt = false;
     this.isEditingLicenseStatus = false;
+    this.nameDraft = '';
+    this.customerNumberDraft = '';
     this.maxUsersDraft = '';
     this.licenseExpiresAtDraft = '';
     this.licenseStatusDraft = 'Aktiv';
@@ -450,11 +658,18 @@ export class CompanyComponent implements OnInit, OnDestroy {
     const hasLicenseExpiryChanges =
       this.originalLicenseExpiresAt !== null &&
       this.selectedCompanyDetails.licenseExpiresAt !== this.originalLicenseExpiresAt;
+    const hasNameChanges =
+      this.originalName !== null &&
+      this.selectedCompanyDetails.name !== this.originalName;
+    const hasCustomerNumberChanges =
+      this.originalCustomerNumber !== null &&
+      this.selectedCompanyDetails.customerNumber !== this.originalCustomerNumber;
     const hasLicenseStatusChanges =
       this.originalLicenseStatus !== null &&
       this.selectedCompanyDetails.licenseStatus !== this.originalLicenseStatus;
 
-    this.hasPendingChanges = hasMaxUsersChanges || hasLicenseExpiryChanges || hasLicenseStatusChanges;
+    this.hasPendingChanges =
+      hasNameChanges || hasMaxUsersChanges || hasLicenseExpiryChanges || hasCustomerNumberChanges || hasLicenseStatusChanges;
   }
 
   private updatePendingChangesForMaxUsersDraft() {
@@ -471,11 +686,18 @@ export class CompanyComponent implements OnInit, OnDestroy {
     const hasLicenseExpiryChanges =
       this.originalLicenseExpiresAt !== null &&
       this.selectedCompanyDetails.licenseExpiresAt !== this.originalLicenseExpiresAt;
+    const hasNameChanges =
+      this.originalName !== null &&
+      this.selectedCompanyDetails.name !== this.originalName;
+    const hasCustomerNumberChanges =
+      this.originalCustomerNumber !== null &&
+      this.selectedCompanyDetails.customerNumber !== this.originalCustomerNumber;
     const hasLicenseStatusChanges =
       this.originalLicenseStatus !== null &&
       this.selectedCompanyDetails.licenseStatus !== this.originalLicenseStatus;
 
-    this.hasPendingChanges = hasMaxUsersChanges || hasLicenseExpiryChanges || hasLicenseStatusChanges;
+    this.hasPendingChanges =
+      hasNameChanges || hasMaxUsersChanges || hasLicenseExpiryChanges || hasCustomerNumberChanges || hasLicenseStatusChanges;
   }
 
   private updatePendingChangesForLicenseExpiresAtDraft() {
@@ -492,10 +714,67 @@ export class CompanyComponent implements OnInit, OnDestroy {
       : false;
     const hasMaxUsersChanges =
       this.originalMaxUsers !== null && this.selectedCompanyDetails.maxUsers !== this.originalMaxUsers;
+    const hasNameChanges =
+      this.originalName !== null &&
+      this.selectedCompanyDetails.name !== this.originalName;
+    const hasCustomerNumberChanges =
+      this.originalCustomerNumber !== null &&
+      this.selectedCompanyDetails.customerNumber !== this.originalCustomerNumber;
     const hasLicenseStatusChanges =
       this.originalLicenseStatus !== null &&
       this.selectedCompanyDetails.licenseStatus !== this.originalLicenseStatus;
 
-    this.hasPendingChanges = hasMaxUsersChanges || hasLicenseExpiryChanges || hasLicenseStatusChanges;
+    this.hasPendingChanges =
+      hasNameChanges || hasMaxUsersChanges || hasLicenseExpiryChanges || hasCustomerNumberChanges || hasLicenseStatusChanges;
+  }
+
+  private updatePendingChangesForCustomerNumberDraft() {
+    if (!this.selectedCompanyDetails) {
+      this.hasPendingChanges = false;
+      return;
+    }
+
+    const draft = this.customerNumberDraft.trim();
+    const hasCustomerNumberChanges = this.originalCustomerNumber !== null
+      ? draft !== this.originalCustomerNumber
+      : false;
+    const hasNameChanges =
+      this.originalName !== null &&
+      this.selectedCompanyDetails.name !== this.originalName;
+    const hasMaxUsersChanges =
+      this.originalMaxUsers !== null && this.selectedCompanyDetails.maxUsers !== this.originalMaxUsers;
+    const hasLicenseExpiryChanges =
+      this.originalLicenseExpiresAt !== null &&
+      this.selectedCompanyDetails.licenseExpiresAt !== this.originalLicenseExpiresAt;
+    const hasLicenseStatusChanges =
+      this.originalLicenseStatus !== null &&
+      this.selectedCompanyDetails.licenseStatus !== this.originalLicenseStatus;
+
+    this.hasPendingChanges =
+      hasNameChanges || hasCustomerNumberChanges || hasMaxUsersChanges || hasLicenseExpiryChanges || hasLicenseStatusChanges;
+  }
+
+  private updatePendingChangesForNameDraft() {
+    if (!this.selectedCompanyDetails) {
+      this.hasPendingChanges = false;
+      return;
+    }
+
+    const draft = this.nameDraft.trim();
+    const hasNameChanges = this.originalName !== null ? draft !== this.originalName : false;
+    const hasCustomerNumberChanges =
+      this.originalCustomerNumber !== null &&
+      this.selectedCompanyDetails.customerNumber !== this.originalCustomerNumber;
+    const hasMaxUsersChanges =
+      this.originalMaxUsers !== null && this.selectedCompanyDetails.maxUsers !== this.originalMaxUsers;
+    const hasLicenseExpiryChanges =
+      this.originalLicenseExpiresAt !== null &&
+      this.selectedCompanyDetails.licenseExpiresAt !== this.originalLicenseExpiresAt;
+    const hasLicenseStatusChanges =
+      this.originalLicenseStatus !== null &&
+      this.selectedCompanyDetails.licenseStatus !== this.originalLicenseStatus;
+
+    this.hasPendingChanges =
+      hasNameChanges || hasCustomerNumberChanges || hasMaxUsersChanges || hasLicenseExpiryChanges || hasLicenseStatusChanges;
   }
 }

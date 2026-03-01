@@ -191,6 +191,18 @@
   appearance: textfield;
 }
 
+.company-details-inline-input {
+  width: 170px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: var(--mat-sys-corner-small);
+  background: #fff;
+  padding: 4px 8px;
+  color: rgba(0, 0, 0, 0.87);
+  font: inherit;
+  text-align: right;
+  box-sizing: border-box;
+}
+
 .company-details-edit-input::-webkit-outer-spin-button,
 .company-details-edit-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -253,6 +265,13 @@
   background: #0074e9;
   color: rgba(255, 255, 255, 0.95);
   border-color: #0074e9;
+}
+
+.company-secondary-button:disabled {
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.38);
+  border-color: transparent;
+  cursor: not-allowed;
 }
 
 .company-primary-button {

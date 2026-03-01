@@ -3,6 +3,7 @@ import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
 import { StatsUserTime } from '@shared/models/stats-user-time';
 import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
+import { CompanySettings } from '@shared/models/company-settings';
 
 type CompanyStatusRow = {
   companyId: number;
@@ -94,6 +95,14 @@ export class CurrentStatusComponent implements OnInit {
   }
 
   async onUpdateClick(): Promise<void> {
+
+    // let ola = await this.backendService.getCompanyKeyFromId(4, this.globalService.getJwt());
+    // ola = ola;
+    const cs = new CompanySettings;
+    cs.id = 4;
+    cs.CustomerNumber = '112233';
+    await this.backendService.setCompanySettings(cs, this.globalService.getJwt());
+
     await this.globalService.refreshCurrentOnlineUsers();
     const companies = this.globalService.getAllCompanyNames();
     const onlineUsers = this.globalService.getCurrentOnlineUsers();

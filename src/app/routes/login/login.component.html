@@ -1,12 +1,47 @@
 <page-header title="Login" [nav]="['home', 'Login']" />
 
-<button
-  mat-raised-button
-  color="primary"
-  type="button"
-  (click)="onLoginClick()"
-  [disabled]="isLoginDisabled"
->
-  {{ loginButtonText }}
-</button>
-<button mat-raised-button color="primary" type="button" (click)="onGetStatClick()">Get Stats</button>
+<section class="login-card">
+  <form class="login-form" (ngSubmit)="onLoginClick()">
+    <mat-form-field appearance="outline">
+      <mat-label>Användarnamn</mat-label>
+      <input
+        matInput
+        name="username"
+        [(ngModel)]="username"
+        autocomplete="username"
+        [disabled]="isLoginDisabled || isLoading"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Lösenord</mat-label>
+      <input
+        matInput
+        name="password"
+        [(ngModel)]="password"
+        type="password"
+        autocomplete="current-password"
+        [disabled]="isLoginDisabled || isLoading"
+      />
+    </mat-form-field>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="isLoginDisabled || isLoading"
+    >
+      {{ isLoading ? 'Loggar in...' : loginButtonText }}
+    </button>
+
+    <button
+      mat-raised-button
+      type="button"
+      class="clear-login-button"
+      [disabled]="isLoading || !hasLocalJwt"
+      (click)="onClearLocalLoginClick()"
+    >
+      Radera lokal login kaka
+    </button>
+  </form>
+</section>

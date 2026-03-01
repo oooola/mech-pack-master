@@ -1,3 +1,24 @@
 :host {
   display: block;
 }
+
+.login-card {
+  max-width: 420px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-error {
+  margin: 0;
+  color: #b3261e;
+  font-size: 14px;
+}
+
+.clear-login-button.mat-mdc-raised-button {
+  --mdc-protected-button-container-color: #c62828;
+  --mdc-protected-button-label-text-color: #fff;
+}

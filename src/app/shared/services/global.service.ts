@@ -11,6 +11,7 @@ export class GlobalService {
   private statsUserTimeList: StatsUserTime[] = [];
   private currentOnlineUsers: StatsUserTime[] = [];
   private allCompanyNames: CompanyNames[] = [];
+  private loginDisplayName = '';
   private companyNamesLoadPromise: Promise<CompanyNames[]> | null = null;
   private currentOnlineUsersLoadPromise: Promise<StatsUserTime[]> | null = null;
 
@@ -132,6 +133,54 @@ export class GlobalService {
     this.storageService.set('jwt', jwt);
     void this.ensureAllCompanyNamesLoaded(true);
     void this.ensureCurrentOnlineUsersLoaded(true);
+  }
+
+  public setLoginDisplayName(name: string): void {
+    const trimmed = name.trim();
+    this.loginDisplayName = trimmed;
+    this.storageService.set('login-display-name', trimmed);
+  }
+
+  public getLoginDisplayName(): string {
+    if (this.loginDisplayName.length > 0) {
+      return this.loginDisplayName;
+    }
+
+    if (this.storageService.has('login-display-name')) {
+      const fromStorage = this.storageService.get('login-display-name');
+      if (typeof fromStorage === 'string') {
+        this.loginDisplayName = fromStorage.trim();
+      }
+    }
+
+    return this.loginDisplayName;
+  }
+
+  // Återställer visningsnamn från local storage enbart när JWT är giltig.
+  public restoreLoginDisplayName(): void {
+    const jwtStatus = this.getJwt();
+    const hasValidJwt = jwtStatus !== 'NO-JWT-FOUND' && jwtStatus !== 'JWT-EXPIRED';
+    if (!hasValidJwt) {
+      this.loginDisplayName = '';
+      this.storageService.remove('login-display-name');
+      return;
+    }
+
+    const fromStorage = this.storageService.has('login-display-name')
+      ? this.storageService.get('login-display-name')
+      : '';
+
+    this.loginDisplayName = typeof fromStorage === 'string' ? fromStorage.trim() : '';
+  }
+
+  // Raderar JWT från local storage och tömmer sessionscache.
+  public clearJwt(): void {
+    this.storageService.remove('jwt');
+    this.storageService.remove('login-display-name');
+    this.statsUserTimeList = [];
+    this.currentOnlineUsers = [];
+    this.allCompanyNames = [];
+    this.loginDisplayName = '';
   }
 
   // Hämtar JWT från local storage och validerar innehållet.
