@@ -7,6 +7,14 @@
   background: #111;
 }
 
+.overview-pie-card {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  background: #111;
+}
+
 .overview-tabs {
   display: block;
 }
@@ -18,8 +26,24 @@
   padding-top: 12px;
 }
 
+.overview-pie-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding-top: 12px;
+}
+
 .overview-chart {
   display: block;
+}
+
+.overview-pie-title {
+  margin: 0;
+  color: #e8eaed;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .overview-empty {

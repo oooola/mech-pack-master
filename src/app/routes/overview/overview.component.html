@@ -43,3 +43,21 @@
     +10
   </button>
 </section>
+
+<section class="overview-pie-card">
+  <h2 class="overview-pie-title">Applikationsfördelning</h2>
+
+  @if (hasAppCodeData) {
+    <div class="overview-pie-wrapper">
+      <canvas
+        class="overview-chart"
+        baseChart
+        [type]="'pie'"
+        [data]="appCodeChartData"
+        [options]="appCodeChartOptions">
+      </canvas>
+    </div>
+  } @else {
+    <p class="overview-empty">Ingen AppCode-statistik att visa.</p>
+  }
+</section>

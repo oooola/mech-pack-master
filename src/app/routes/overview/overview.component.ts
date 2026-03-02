@@ -19,8 +19,21 @@ export class OverviewComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private sortedUsageEntries: [number, number][] = [];
   private sortedUsersEntries: [number, number][] = [];
+  private sortedAppCodeEntries: [string, number][] = [];
   private companyNameMap = new Map<number, string>();
   private readonly stepSize = 10;
+  private readonly pieColors = [
+    '#1976d2',
+    '#ef6c00',
+    '#2e7d32',
+    '#8e24aa',
+    '#c62828',
+    '#00838f',
+    '#6d4c41',
+    '#ad1457',
+    '#455a64',
+    '#9e9d24',
+  ];
 
   selectedTabIndex = 0;
   displayLimit = 10;
@@ -110,8 +123,46 @@ export class OverviewComponent implements OnInit {
     },
   };
 
+  appCodeChartData: ChartConfiguration<'pie'>['data'] = {
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [],
+        borderColor: '#111',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  appCodeChartOptions: ChartConfiguration<'pie'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#9aa0a6',
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: context => {
+            const label = context.label || '';
+            const value = Number(context.raw) || 0;
+            const total = context.dataset.data.reduce((sum, item) => sum + Number(item || 0), 0);
+            const percent = total > 0 ? (value / total) * 100 : 0;
+            return `${label}: ${percent.toFixed(1)}%`;
+          },
+        },
+      },
+    },
+  };
+
   hasUsageData = false;
   hasUsersData = false;
+  hasAppCodeData = false;
 
   ngOnInit(): void {
     void this.loadChart();
@@ -130,10 +181,12 @@ export class OverviewComponent implements OnInit {
 
       const totalSecUsedByCompany = new Map<number, number>();
       const uniqueUsersByCompany = new Map<number, Set<number>>();
+      const totalSecUsedByAppCode = new Map<string, number>();
       for (const item of stats) {
         const companyId = Number(item?.CompanyId);
         const userId = Number(item?.UserId);
         const secUsed = Number(item?.SecUsed);
+        const appCode = typeof item?.AppCode === 'string' ? item.AppCode.trim() : '';
 
         if (!Number.isFinite(companyId)) {
           continue;
@@ -142,6 +195,11 @@ export class OverviewComponent implements OnInit {
         if (Number.isFinite(secUsed)) {
           const currentSecUsed = totalSecUsedByCompany.get(companyId) ?? 0;
           totalSecUsedByCompany.set(companyId, currentSecUsed + secUsed);
+
+          if (appCode.length > 0) {
+            const currentAppCodeSecUsed = totalSecUsedByAppCode.get(appCode) ?? 0;
+            totalSecUsedByAppCode.set(appCode, currentAppCodeSecUsed + secUsed);
+          }
         }
 
         if (Number.isFinite(userId)) {
@@ -167,6 +225,13 @@ export class OverviewComponent implements OnInit {
 
           return a[0] - b[0];
         });
+      this.sortedAppCodeEntries = Array.from(totalSecUsedByAppCode.entries()).sort((a, b) => {
+        if (b[1] !== a[1]) {
+          return b[1] - a[1];
+        }
+
+        return a[0].localeCompare(b[0], 'sv');
+      });
 
       const allCompanyIds = new Set<number>();
       for (const [companyId] of this.sortedUsageEntries) {
@@ -198,11 +263,23 @@ export class OverviewComponent implements OnInit {
           },
         ],
       };
+      this.appCodeChartData = {
+        labels: [],
+        datasets: [
+          {
+            ...this.appCodeChartData.datasets[0],
+            data: [],
+            backgroundColor: [],
+          },
+        ],
+      };
       this.sortedUsageEntries = [];
       this.sortedUsersEntries = [];
+      this.sortedAppCodeEntries = [];
       this.companyNameMap = new Map<number, string>();
       this.hasUsageData = false;
       this.hasUsersData = false;
+      this.hasAppCodeData = false;
     } finally {
       this.cdr.markForCheck();
     }
@@ -251,6 +328,11 @@ export class OverviewComponent implements OnInit {
       ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
     );
     const usersData = usersEntries.map(([, totalUsers]) => totalUsers);
+    const appCodeLabels = this.sortedAppCodeEntries.map(([appCode]) => this.globalService.appCodeToName(appCode));
+    const appCodeDataInHours = this.sortedAppCodeEntries.map(([, totalSecUsed]) =>
+      Number((totalSecUsed / 3600).toFixed(2)),
+    );
+    const pieColors = appCodeLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
 
     this.usageChartData = {
       labels: usageLabels,
@@ -272,8 +354,20 @@ export class OverviewComponent implements OnInit {
       ],
     };
 
+    this.appCodeChartData = {
+      labels: appCodeLabels,
+      datasets: [
+        {
+          ...this.appCodeChartData.datasets[0],
+          data: appCodeDataInHours,
+          backgroundColor: pieColors,
+        },
+      ],
+    };
+
     this.hasUsageData = usageDataInHours.length > 0;
     this.hasUsersData = usersData.length > 0;
+    this.hasAppCodeData = appCodeDataInHours.length > 0;
   }
 
   private getCompanyNameMap(companyIds: number[]): Map<number, string> {
@@ -307,6 +401,9 @@ export class OverviewComponent implements OnInit {
       const secUsed = Number((item as Partial<StatsUserTime>)?.SecUsed);
       const startTs = Number((item as Partial<StatsUserTime>)?.StartTS);
       const endTs = Number((item as Partial<StatsUserTime>)?.EndTS);
+      const appCode = typeof (item as Partial<StatsUserTime>)?.AppCode === 'string'
+        ? ((item as Partial<StatsUserTime>).AppCode as string).trim()
+        : '';
 
       if (
         !Number.isFinite(userId) ||
@@ -321,6 +418,7 @@ export class OverviewComponent implements OnInit {
       const stats = new StatsUserTime();
       stats.UserId = userId;
       stats.CompanyId = companyId;
+      stats.AppCode = appCode;
       stats.SecUsed = secUsed;
       stats.StartTS = startTs;
       stats.EndTS = endTs;

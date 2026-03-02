@@ -54,6 +54,29 @@ export class GlobalService {
     return this.allCompanyNames;
   }
 
+  public appCodeToName(appCode: string): string {
+    const normalizedAppCode = appCode.trim().toUpperCase();
+
+    switch (normalizedAppCode) {
+      case 'DC':
+        return 'Ritningsläsning';
+      case 'MC':
+        return 'MätKurs';
+      case 'IC':
+        return 'IsoKurs';
+      case 'NT':
+        return 'Kunskapstest';
+      case 'MM':
+        return 'MekMät';
+      case 'II':
+        return 'IsoIntro';
+        case 'MA':
+        return 'MechApp';
+      default:
+        return appCode;
+    }
+  }
+
   // Säkerställer att hela företagslistan är laddad i cache.
   // Återanvänder pågående request och kan tvingas ladda om.
   public async ensureAllCompanyNamesLoaded(forceReload = false): Promise<CompanyNames[]> {
@@ -259,6 +282,9 @@ export class GlobalService {
       const secUsed = Number((item as Partial<StatsUserTime>)?.SecUsed);
       const startTs = Number((item as Partial<StatsUserTime>)?.StartTS);
       const endTs = Number((item as Partial<StatsUserTime>)?.EndTS);
+      const appCode = typeof (item as Partial<StatsUserTime>)?.AppCode === 'string'
+        ? ((item as Partial<StatsUserTime>).AppCode as string).trim()
+        : '';
 
       if (
         !Number.isFinite(userId) ||
@@ -276,6 +302,7 @@ export class GlobalService {
       s.StartTS = startTs;
       s.EndTS = endTs;
       s.SecUsed = secUsed;
+      s.AppCode = appCode;
       users.push(s);
 
       /*
