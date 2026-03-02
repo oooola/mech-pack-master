@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angu
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { GlobalService } from '@shared/services/global.service';
 
 @Component({
   selector: 'app-header',
@@ -22,6 +23,12 @@ export class HeaderComponent {
   @Input() showBranding = false;
 
   @Output() toggleSidenav = new EventEmitter<void>();
+
+  readonly buildVersion: string;
+
+  constructor(private readonly globalService: GlobalService) {
+    this.buildVersion = this.globalService.getBuildVersion();
+  }
 
   async toggleFullscreen() {
     if (document.fullscreenElement) {

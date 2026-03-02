@@ -20,6 +20,10 @@ export class GlobalService {
     private readonly backendService: BackendService,
   ) {}
 
+  public getBuildVersion():string {
+    return '1.0.0.0';
+  }
+
   // Sparar senaste hämtade användningstider i minnet.
   // Används som cache mellan vyer.
   public setStatsUserTime(userTimeList: StatsUserTime[]): void {

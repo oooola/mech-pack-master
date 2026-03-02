@@ -7,3 +7,9 @@
   background-color: var(--header-background-color);
   backdrop-filter: blur(8px);
 }
+
+.matero-header .build-version {
+  margin-right: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
