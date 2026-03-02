@@ -21,7 +21,7 @@ export class GlobalService {
   ) {}
 
   public getBuildVersion():string {
-    return '1.0.0.0';
+    return '1.1.0.0';
   }
 
   // Sparar senaste hämtade användningstider i minnet.
