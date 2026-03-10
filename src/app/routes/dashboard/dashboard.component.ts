@@ -7,7 +7,7 @@ import { PageHeaderComponent } from '@shared';
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [PageHeaderComponent],
+  //imports: [PageHeaderComponent],
 })
 export class DashboardComponent {
 }
