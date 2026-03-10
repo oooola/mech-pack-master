@@ -1,23 +1,27 @@
 <page-header title="Aktiva Användare" [nav]="['home', 'Aktiva användare']" />
 
 <mat-tab-group class="active-users-tabs" [(selectedIndex)]="selectedTabIndex">
-  <mat-tab label="Aktiv Tid">
-    <canvas
-      class="active-users-chart"
-      baseChart
-      [type]="'line'"
-      [data]="activeTimeChartData"
-      [options]="activeTimeChartOptions">
-    </canvas>
+  <mat-tab label="Inloggad tid">
+    <div class="active-users-chart-wrapper">
+      <canvas
+        class="active-users-chart"
+        baseChart
+        [type]="'line'"
+        [data]="activeTimeChartData"
+        [options]="activeTimeChartOptions">
+      </canvas>
+    </div>
   </mat-tab>
-  <mat-tab label="Aktiv Antal">
-    <canvas
-      class="active-users-chart"
-      baseChart
-      [type]="'line'"
-      [data]="activeCountChartData"
-      [options]="activeCountChartOptions">
-    </canvas>
+  <mat-tab label="Antal inloggade">
+    <div class="active-users-chart-wrapper">
+      <canvas
+        class="active-users-chart"
+        baseChart
+        [type]="'line'"
+        [data]="activeCountChartData"
+        [options]="activeCountChartOptions">
+      </canvas>
+    </div>
   </mat-tab>
 </mat-tab-group>
 

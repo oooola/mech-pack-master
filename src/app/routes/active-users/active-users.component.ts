@@ -24,6 +24,8 @@ type CompanyOption = {
   imports: [PageHeaderComponent, BaseChartDirective, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatTabsModule],
 })
 export class ActiveUsersComponent implements OnInit {
+  private readonly pointCount = 15;
+
   showAllPrograms = true;
   showMatkurs = false;
   selectedTabIndex = 0;
@@ -58,7 +60,7 @@ export class ActiveUsersComponent implements OnInit {
   };
 
   private readonly matkursDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
-    data: [8, 14, 11, 13, 17, 16, 12],
+    data: [8, 14, 11, 13, 17, 16, 12, 10, 9, 15, 18, 14, 13, 11, 8],
     label: 'MätKurs',
     fill: true,
     borderColor: '#43a047',
@@ -71,6 +73,7 @@ export class ActiveUsersComponent implements OnInit {
 
   activeTimeChartOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     animation: false,
     scales: {
       x: {
@@ -86,7 +89,7 @@ export class ActiveUsersComponent implements OnInit {
         },
         title: {
           display: true,
-          text: 'Minuter',
+          text: 'Timmar',
           color: '#9aa0a6',
         },
       },
@@ -95,6 +98,7 @@ export class ActiveUsersComponent implements OnInit {
 
   activeCountChartOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     animation: false,
     scales: {
       x: {
@@ -208,43 +212,81 @@ export class ActiveUsersComponent implements OnInit {
         ? this.allStats
         : this.allStats.filter(item => item.CompanyId === this.selectedCompanyId);
 
-    this.horizontalDateLabels = StatsHelpers.getHorizontalDateLabels(filteredStats as any, 7);
-    const activUsersDataSet = StatsHelpers.getDataActivUsersTime(filteredStats);
+    const chartSeries = this.getChartSeries(filteredStats);
+    this.horizontalDateLabels = chartSeries.labels;
     this.activeUsersDataset = {
       ...this.activeUsersDataset,
-      data: StatsHelpers.timeDataSecToMin(activUsersDataSet),
+      data: chartSeries.timeInHours,
     };
     this.activeUsersCountDataset = {
       ...this.activeUsersCountDataset,
-      data: this.getActiveUsersCountData(filteredStats),
+      data: chartSeries.userCounts,
     };
     this.activeTimeChartData = this.buildActiveTimeChartData();
     this.activeCountChartData = this.buildActiveCountChartData();
   }
 
-  // Räknar antal unika användare per dag i filtrerad statistik.
-  private getActiveUsersCountData(stats: StatsUserTime[]): number[] {
+  private getChartSeries(stats: StatsUserTime[]): { labels: string[]; timeInHours: number[]; userCounts: number[] } {
     if (!Array.isArray(stats) || stats.length === 0) {
-      return [];
+      return {
+        labels: [],
+        timeInHours: [],
+        userCounts: [],
+      };
     }
 
-    const userIdsByDay = new Map<string, Set<number>>();
     const dayFormatter = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Stockholm' });
+    const secUsedByDay = new Map<string, number>();
+    const userIdsByDay = new Map<string, Set<number>>();
+    let maxTs = 0;
 
     for (const item of stats) {
+      const startTs = Number(item.StartTS);
+      const secUsed = Number(item.SecUsed);
       const userId = Number(item.UserId);
-      if (!Number.isFinite(userId)) {
+      if (!Number.isFinite(startTs)) {
         continue;
       }
 
-      const dayKey = dayFormatter.format(new Date(item.StartTS * 1000));
-      const dayUserIds = userIdsByDay.get(dayKey) ?? new Set<number>();
-      dayUserIds.add(userId);
-      userIdsByDay.set(dayKey, dayUserIds);
+      maxTs = Math.max(maxTs, startTs);
+      const dayKey = dayFormatter.format(new Date(startTs * 1000));
+
+      if (Number.isFinite(secUsed)) {
+        const currentTotal = secUsedByDay.get(dayKey) ?? 0;
+        secUsedByDay.set(dayKey, currentTotal + secUsed);
+      }
+
+      if (Number.isFinite(userId)) {
+        const dayUserIds = userIdsByDay.get(dayKey) ?? new Set<number>();
+        dayUserIds.add(userId);
+        userIdsByDay.set(dayKey, dayUserIds);
+      }
     }
 
-    const sortedDayKeys = Array.from(userIdsByDay.keys()).sort();
-    return sortedDayKeys.map(dayKey => userIdsByDay.get(dayKey)?.size ?? 0);
+    if (maxTs === 0) {
+      return {
+        labels: [],
+        timeInHours: [],
+        userCounts: [],
+      };
+    }
+
+    const labels: string[] = [];
+    const timeInHours: number[] = [];
+    const userCounts: number[] = [];
+    const endDate = new Date(maxTs * 1000);
+    endDate.setHours(12, 0, 0, 0);
+
+    for (let index = this.pointCount - 1; index >= 0; index--) {
+      const currentDate = new Date(endDate);
+      currentDate.setDate(endDate.getDate() - index);
+      const dayKey = dayFormatter.format(currentDate);
+      labels.push(StatsHelpers.toDateLabelFromDate(currentDate));
+      timeInHours.push(Number(((secUsedByDay.get(dayKey) ?? 0) / 3600).toFixed(2)));
+      userCounts.push(userIdsByDay.get(dayKey)?.size ?? 0);
+    }
+
+    return { labels, timeInHours, userCounts };
   }
 
   // Skapar och sorterar företagsalternativ med total användningstid.

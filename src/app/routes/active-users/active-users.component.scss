@@ -1,6 +1,14 @@
+.active-users-chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(280px, calc(100vh - 360px), 460px);
+  min-height: 280px;
+}
+
 .active-users-chart {
   display: block;
   width: 100%;
+  height: 100%;
   margin: 12px 0 0;
 }
 
@@ -71,4 +79,10 @@
 
 .active-users-tabs {
   margin-top: 8px;
+}
+
+@media (width <= 1024px) {
+  .active-users-chart-wrapper {
+    height: clamp(260px, calc(100vh - 340px), 400px);
+  }
 }
