@@ -95,12 +95,16 @@ export class StatsHelpers {
     return retArr;
   } 
 
-  private static toDateLabel(timestampSeconds: number): string {
-    const date = new Date(timestampSeconds * 1000);
+  public static toDateLabelFromDate(date: Date): string {
     const day = date.getDate();
     const month = this.monthNames[date.getMonth()] ?? '';
 
     return `${day}${this.getSwedishOrdinalSuffix(day)} ${month}`;
+  }
+
+  private static toDateLabel(timestampSeconds: number): string {
+    const date = new Date(timestampSeconds * 1000);
+    return this.toDateLabelFromDate(date);
   }
 
   private static getSwedishOrdinalSuffix(day: number): string {

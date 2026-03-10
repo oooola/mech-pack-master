@@ -20,6 +20,8 @@ export class OverviewComponent implements OnInit {
   private sortedUsageEntries: [number, number][] = [];
   private sortedUsersEntries: [number, number][] = [];
   private sortedAppCodeEntries: [string, number][] = [];
+  private sortedPlatformEntries: [string, number][] = [];
+  private platformUserCounts: number[] = [];
   private companyNameMap = new Map<number, string>();
   private readonly stepSize = 10;
   private readonly pieColors = [
@@ -36,6 +38,7 @@ export class OverviewComponent implements OnInit {
   ];
 
   selectedTabIndex = 0;
+  selectedDistributionTabIndex = 0;
   displayLimit = 10;
 
   usageChartData: ChartConfiguration<'bar'>['data'] = {
@@ -160,9 +163,50 @@ export class OverviewComponent implements OnInit {
     },
   };
 
+  platformChartData: ChartConfiguration<'pie'>['data'] = {
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [],
+        borderColor: '#111',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  platformChartOptions: ChartConfiguration<'pie'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#9aa0a6',
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: context => {
+            const label = context.label || '';
+            const value = Number(context.raw) || 0;
+            const total = context.dataset.data.reduce((sum, item) => sum + Number(item || 0), 0);
+            const percent = total > 0 ? (value / total) * 100 : 0;
+            return [
+              `${label} ${percent.toFixed(1)}%`,
+              `Användare ${this.platformUserCounts[context.dataIndex] ?? 0}`,
+            ];
+          },
+        },
+      },
+    },
+  };
+
   hasUsageData = false;
   hasUsersData = false;
   hasAppCodeData = false;
+  hasPlatformData = false;
 
   ngOnInit(): void {
     void this.loadChart();
@@ -182,11 +226,17 @@ export class OverviewComponent implements OnInit {
       const totalSecUsedByCompany = new Map<number, number>();
       const uniqueUsersByCompany = new Map<number, Set<number>>();
       const totalSecUsedByAppCode = new Map<string, number>();
+      const totalSecUsedByPlatform = new Map<string, number>();
+      const uniqueUsersByPlatform = new Map<string, Set<number>>();
       for (const item of stats) {
         const companyId = Number(item?.CompanyId);
         const userId = Number(item?.UserId);
         const secUsed = Number(item?.SecUsed);
         const appCode = typeof item?.AppCode === 'string' ? item.AppCode.trim() : '';
+        const platformCode = typeof item?.Platform === 'string' ? item.Platform.trim() : '';
+        const platform = platformCode.length > 0
+          ? this.globalService.platformCodeToName(platformCode)
+          : '';
 
         if (!Number.isFinite(companyId)) {
           continue;
@@ -200,12 +250,23 @@ export class OverviewComponent implements OnInit {
             const currentAppCodeSecUsed = totalSecUsedByAppCode.get(appCode) ?? 0;
             totalSecUsedByAppCode.set(appCode, currentAppCodeSecUsed + secUsed);
           }
+
+          if (platform.length > 0) {
+            const currentPlatformSecUsed = totalSecUsedByPlatform.get(platform) ?? 0;
+            totalSecUsedByPlatform.set(platform, currentPlatformSecUsed + secUsed);
+          }
         }
 
         if (Number.isFinite(userId)) {
           const userSet = uniqueUsersByCompany.get(companyId) ?? new Set<number>();
           userSet.add(userId);
           uniqueUsersByCompany.set(companyId, userSet);
+
+          if (platform.length > 0) {
+            const platformUserSet = uniqueUsersByPlatform.get(platform) ?? new Set<number>();
+            platformUserSet.add(userId);
+            uniqueUsersByPlatform.set(platform, platformUserSet);
+          }
         }
       }
 
@@ -232,6 +293,14 @@ export class OverviewComponent implements OnInit {
 
         return a[0].localeCompare(b[0], 'sv');
       });
+      this.sortedPlatformEntries = Array.from(totalSecUsedByPlatform.entries()).sort((a, b) => {
+        if (b[1] !== a[1]) {
+          return b[1] - a[1];
+        }
+
+        return a[0].localeCompare(b[0], 'sv');
+      });
+      this.platformUserCounts = this.sortedPlatformEntries.map(([platform]) => uniqueUsersByPlatform.get(platform)?.size ?? 0);
 
       const allCompanyIds = new Set<number>();
       for (const [companyId] of this.sortedUsageEntries) {
@@ -273,13 +342,26 @@ export class OverviewComponent implements OnInit {
           },
         ],
       };
+      this.platformChartData = {
+        labels: [],
+        datasets: [
+          {
+            ...this.platformChartData.datasets[0],
+            data: [],
+            backgroundColor: [],
+          },
+        ],
+      };
       this.sortedUsageEntries = [];
       this.sortedUsersEntries = [];
       this.sortedAppCodeEntries = [];
+      this.sortedPlatformEntries = [];
+      this.platformUserCounts = [];
       this.companyNameMap = new Map<number, string>();
       this.hasUsageData = false;
       this.hasUsersData = false;
       this.hasAppCodeData = false;
+      this.hasPlatformData = false;
     } finally {
       this.cdr.markForCheck();
     }
@@ -329,10 +411,15 @@ export class OverviewComponent implements OnInit {
     );
     const usersData = usersEntries.map(([, totalUsers]) => totalUsers);
     const appCodeLabels = this.sortedAppCodeEntries.map(([appCode]) => this.globalService.appCodeToName(appCode));
+    const platformLabels = this.sortedPlatformEntries.map(([platform]) => platform);
     const appCodeDataInHours = this.sortedAppCodeEntries.map(([, totalSecUsed]) =>
       Number((totalSecUsed / 3600).toFixed(2)),
     );
+    const platformDataInHours = this.sortedPlatformEntries.map(([, totalSecUsed]) =>
+      Number((totalSecUsed / 3600).toFixed(2)),
+    );
     const pieColors = appCodeLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
+    const platformPieColors = platformLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
 
     this.usageChartData = {
       labels: usageLabels,
@@ -365,9 +452,21 @@ export class OverviewComponent implements OnInit {
       ],
     };
 
+    this.platformChartData = {
+      labels: platformLabels,
+      datasets: [
+        {
+          ...this.platformChartData.datasets[0],
+          data: platformDataInHours,
+          backgroundColor: platformPieColors,
+        },
+      ],
+    };
+
     this.hasUsageData = usageDataInHours.length > 0;
     this.hasUsersData = usersData.length > 0;
     this.hasAppCodeData = appCodeDataInHours.length > 0;
+    this.hasPlatformData = platformDataInHours.length > 0;
   }
 
   private getCompanyNameMap(companyIds: number[]): Map<number, string> {
@@ -404,6 +503,9 @@ export class OverviewComponent implements OnInit {
       const appCode = typeof (item as Partial<StatsUserTime>)?.AppCode === 'string'
         ? ((item as Partial<StatsUserTime>).AppCode as string).trim()
         : '';
+      const platform = typeof (item as Partial<StatsUserTime>)?.Platform === 'string'
+        ? ((item as Partial<StatsUserTime>).Platform as string).trim()
+        : '';
 
       if (
         !Number.isFinite(userId) ||
@@ -419,6 +521,7 @@ export class OverviewComponent implements OnInit {
       stats.UserId = userId;
       stats.CompanyId = companyId;
       stats.AppCode = appCode;
+      stats.Platform = platform;
       stats.SecUsed = secUsed;
       stats.StartTS = startTs;
       stats.EndTS = endTs;

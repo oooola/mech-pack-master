@@ -45,19 +45,37 @@
 </section>
 
 <section class="overview-pie-card">
-  <h2 class="overview-pie-title">Applikationsfördelning</h2>
+  <mat-tab-group class="overview-tabs" [(selectedIndex)]="selectedDistributionTabIndex">
+    <mat-tab label="Applikationsfördelning">
+      @if (hasAppCodeData) {
+        <div class="overview-pie-wrapper">
+          <canvas
+            class="overview-chart"
+            baseChart
+            [type]="'pie'"
+            [data]="appCodeChartData"
+            [options]="appCodeChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <p class="overview-empty">Ingen AppCode-statistik att visa.</p>
+      }
+    </mat-tab>
 
-  @if (hasAppCodeData) {
-    <div class="overview-pie-wrapper">
-      <canvas
-        class="overview-chart"
-        baseChart
-        [type]="'pie'"
-        [data]="appCodeChartData"
-        [options]="appCodeChartOptions">
-      </canvas>
-    </div>
-  } @else {
-    <p class="overview-empty">Ingen AppCode-statistik att visa.</p>
-  }
+    <mat-tab label="Plattformsfördelning">
+      @if (hasPlatformData) {
+        <div class="overview-pie-wrapper">
+          <canvas
+            class="overview-chart"
+            baseChart
+            [type]="'pie'"
+            [data]="platformChartData"
+            [options]="platformChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <p class="overview-empty">Ingen plattformsstatistik att visa.</p>
+      }
+    </mat-tab>
+  </mat-tab-group>
 </section>

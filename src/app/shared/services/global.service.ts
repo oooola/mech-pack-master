@@ -21,7 +21,7 @@ export class GlobalService {
   ) {}
 
   public getBuildVersion():string {
-    return '1.1.0.0';
+    return '1.2.0.0';
   }
 
   // Sparar senaste hämtade användningstider i minnet.
@@ -80,6 +80,32 @@ export class GlobalService {
         return appCode;
     }
   }
+
+  // Returns "Android" | "iPhone" | "iPad" | "Mac" | "Windows" | "Linux" | "CromeBook" | "Unknown";
+  public platformCodeToName(platformCode: string): string {
+    const normalizedAppCode = platformCode.trim().toUpperCase();
+    switch (normalizedAppCode) {
+      case 'WND':
+        return 'Windows';
+      case 'AND':
+        return 'Android';
+      case 'IPH':
+        return 'Iphone';
+      case 'IPA':
+        return 'Ipad';
+      case 'MAC':
+        return 'Mac';
+      case 'LIX':
+        return 'Linux';
+      case 'CRM':
+        return 'CromeBook';
+      case 'UNK':
+        return 'Unknown';
+      default:
+        return platformCode;
+    }
+  }
+
 
   // Säkerställer att hela företagslistan är laddad i cache.
   // Återanvänder pågående request och kan tvingas ladda om.
