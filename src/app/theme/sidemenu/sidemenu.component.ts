@@ -54,4 +54,8 @@ export class SidemenuComponent {
   menu$ = this.menu.getAll();
 
   buildRoute = this.menu.buildRoute;
+
+  onMenuClick(route: string) {
+    this.menu.notifyClick(route);
+  }
 }

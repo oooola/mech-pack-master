@@ -35,6 +35,7 @@ export interface Menu {
 })
 export class MenuService {
   private readonly menu$ = new BehaviorSubject<Menu[]>([]);
+  private readonly menuClick$ = new BehaviorSubject<string | null>(null);
 
   /** Get all the menu data. */
   getAll() {
@@ -44,6 +45,16 @@ export class MenuService {
   /** Observe the change of menu data. */
   change() {
     return this.menu$.pipe(share());
+  }
+
+  /** Observe menu link clicks. */
+  clicks() {
+    return this.menuClick$.asObservable();
+  }
+
+  /** Notify that a menu route was clicked. */
+  notifyClick(route: string) {
+    this.menuClick$.next(route);
   }
 
   /** Initialize the menu data. */

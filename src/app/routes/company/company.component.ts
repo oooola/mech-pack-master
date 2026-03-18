@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MenuService } from '@core';
 import { BackendService, GlobalService, PageHeaderComponent } from '@shared';
 import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
 import { CompanySettings } from '@shared/models/company-settings';
 import { License } from '@shared/models/license';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { UnsavedChangesDialogComponent } from './unsaved-changes-dialog.component';
 
 interface CompanyDetails {
@@ -31,7 +32,9 @@ export class CompanyComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialog = inject(MatDialog);
   private readonly globalService = inject(GlobalService);
+  private readonly menuService = inject(MenuService);
   private discardDialogPromise: Promise<boolean> | null = null;
+  private menuClickSubscription: Subscription | null = null;
   private companyNameEntries: CompanyNames[] = [];
   private selectedCompanyId: number | null = null;
 
@@ -59,6 +62,12 @@ export class CompanyComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     await this.globalService.ensureAllCompanyNamesLoaded();
     this.companyNameEntries = this.globalService.getAllCompanyNames();
+    this.menuClickSubscription = this.menuService.clicks().subscribe(route => {
+      if (route === 'company' && this.selectedCompanyDetails) {
+        this.startSearchMode('');
+        this.cdr.markForCheck();
+      }
+    });
     this.cdr.markForCheck();
   }
 
@@ -102,6 +111,22 @@ export class CompanyComponent implements OnInit, OnDestroy {
     }
 
     this.startSearchMode(this.searchTerm);
+  }
+
+  async onSearchEnter(event: Event) {
+    event.preventDefault();
+
+    const input = event.target as HTMLInputElement | null;
+    const term = (input?.value ?? this.searchTerm).trim().toLocaleLowerCase('sv');
+    const firstVisibleCompany = this.companyNameEntries
+      .map(company => company.CompanyName)
+      .find(companyName => term.length === 0 || companyName.toLocaleLowerCase('sv').includes(term));
+
+    if (!firstVisibleCompany) {
+      return;
+    }
+
+    await this.onCompanySelect(firstVisibleCompany);
   }
 
   async onCompanySelect(company: string) {
@@ -150,6 +175,23 @@ export class CompanyComponent implements OnInit, OnDestroy {
       this.selectedCompanyDetails = null;
     } finally {
       this.cdr.markForCheck();
+    }
+  }
+
+  async onCopyLicenseKey(): Promise<void> {
+    await this.onCopyText(this.selectedCompanyDetails?.licenseKey ?? '');
+  }
+
+  async onCopyText(value: string): Promise<void> {
+    const text = value.trim();
+    if (!text || text === '-') {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error('Kunde inte kopiera texten.', error);
     }
   }
 
@@ -569,6 +611,7 @@ export class CompanyComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isUpdating = false;
+    this.menuClickSubscription?.unsubscribe();
   }
 
   private getPrimaryLicense(licenses: License[]): License | null {

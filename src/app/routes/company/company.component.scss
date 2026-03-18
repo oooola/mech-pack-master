@@ -104,6 +104,31 @@
   text-align: right;
 }
 
+.company-details-copy-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.company-details-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #0074e9;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.company-details-copy-button:hover {
+  background: rgba(0, 116, 233, 0.08);
+}
+
 .company-status-suspended {
   color: #c62828;
   font-weight: 600;

@@ -30,6 +30,7 @@
           <a
             class="menu-heading"
             [routerLink]="buildRoute(parentRoute.concat([menuItem.route]))"
+            (click)="onMenuClick(menuItem.route)"
             matRipple
             [matRippleDisabled]="!ripple"
           >

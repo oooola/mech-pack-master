@@ -11,6 +11,7 @@
     [value]="searchTerm"
     (focus)="onSearchFocus($event)"
     (input)="onSearchInput($event)"
+    (keydown.enter)="onSearchEnter($event)"
   />
 </div>
 
@@ -39,36 +40,66 @@
           (blur)="onNameSave()"
         />
       } @else {
-        <button class="company-details-edit-button" type="button" (click)="onNameEditStart()">
-          {{ selectedCompanyDetails.name || '-' }}
-        </button>
+        <div class="company-details-value company-details-copy-value">
+          <button
+            class="company-details-copy-button material-icons"
+            type="button"
+            aria-label="Kopiera företagsnamn"
+            title="Kopiera företagsnamn"
+            (click)="onCopyText(selectedCompanyDetails.name)"
+          >
+            content_copy
+          </button>
+          <button class="company-details-edit-button" type="button" (click)="onNameEditStart()">
+            {{ selectedCompanyDetails.name || '-' }}
+          </button>
+        </div>
       }
     </div>
     <div class="company-details-row">
       <span class="company-details-label">Licensnyckel</span>
-      <span class="company-details-value">{{ selectedCompanyDetails.licenseKey }}</span>
+      <div class="company-details-value company-details-copy-value">
+        <button
+          class="company-details-copy-button material-icons"
+          type="button"
+          aria-label="Kopiera licensnyckel"
+          title="Kopiera licensnyckel"
+          (click)="onCopyLicenseKey()"
+        >
+          content_copy
+        </button>
+        <span>{{ selectedCompanyDetails.licenseKey }}</span>
+      </div>
     </div>
     <div class="company-details-row">
       <span class="company-details-label">PIN-kod</span>
-      <span class="company-details-value">{{ selectedCompanyDetails.pinCode }}</span>
+      <div class="company-details-value company-details-copy-value">
+        <button
+          class="company-details-copy-button material-icons"
+          type="button"
+          aria-label="Kopiera pinkod"
+          title="Kopiera pinkod"
+          (click)="onCopyText(selectedCompanyDetails.pinCode)"
+        >
+          content_copy
+        </button>
+        <span>{{ selectedCompanyDetails.pinCode }}</span>
+      </div>
     </div>
     <div class="company-details-row">
       <span class="company-details-label">Kundnummer</span>
-      @if (isEditingCustomerNumber) {
-        <input
-          class="company-details-inline-input"
-          type="text"
-          [value]="customerNumberDraft"
-          (input)="onCustomerNumberInput($event)"
-          (keydown.enter)="onCustomerNumberSave()"
-          (keydown.escape)="onCustomerNumberCancel()"
-          (blur)="onCustomerNumberSave()"
-        />
-      } @else {
-        <button class="company-details-edit-button" type="button" (click)="onCustomerNumberEditStart()">
-          {{ selectedCompanyDetails.customerNumber || '-' }}
+      <div class="company-details-value company-details-copy-value">
+        <button
+          class="company-details-copy-button material-icons"
+          type="button"
+          aria-label="Kopiera kundnummer"
+          title="Kopiera kundnummer"
+          (click)="onCopyText(selectedCompanyDetails.customerNumber)"
+        >
+          content_copy
         </button>
-      }
+        <span>{{ selectedCompanyDetails.customerNumber || '-' }}</span>
+      </div>
     </div>
     <div class="company-details-row">
       <span class="company-details-label">Licensstatus</span>
