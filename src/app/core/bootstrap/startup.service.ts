@@ -5,33 +5,39 @@ import { Menu, MenuService } from './menu.service';
 const DEFAULT_MENU: Menu[] = [
   {
     route: 'current-status',
-    name: 'Status',
+    name: 'Inloggade Användare',
     type: 'link',
-    icon: 'monitor_heart',
+    icon: 'how_to_reg',
   },
   {
     route: 'dashboard/active-users',
-    name: 'Aktiva Användare',
+    name: 'Aktivitet Användare',
     type: 'link',
     icon: 'groups',
   },
   {
-    route: 'overview',
-    name: 'Översikt',
+    route: 'active-company',
+    name: 'Aktivitet Företag',
     type: 'link',
-    icon: 'insights',
+    icon: 'apartment',
+  },
+  {
+    route: 'overview',
+    name: 'Fördelning',
+    type: 'link',
+    icon: 'pie_chart',
   },
   {
     route: 'company',
-    name: 'Företag',
+    name: 'Hitta Företag',
     type: 'link',
-    icon: 'apartment',
+    icon: 'search',
   },
   {
     route: 'login',
     name: 'Login',
     type: 'link',
-    icon: 'login',
+    icon: 'meeting_room',
   },
   {
     route: '/',

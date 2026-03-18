@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
 import { AdminLayoutComponent } from '@theme/admin-layout/admin-layout.component';
+import { ActiveCompanyComponent } from './routes/active-company/active-company.component';
 import { ActiveUsersComponent } from './routes/active-users/active-users.component';
 import { CompanyComponent } from './routes/company/company.component';
 import { CurrentStatusComponent } from './routes/current-status/current-status.component';
@@ -19,6 +20,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
+      { path: 'active-company', component: ActiveCompanyComponent },
       { path: 'dashboard/active-users', component: ActiveUsersComponent },
       { path: 'company', component: CompanyComponent },
       { path: 'current-status', component: CurrentStatusComponent },

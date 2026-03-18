@@ -16,8 +16,8 @@ export class BackendService {
   constructor(private http: HttpClient) {}
 
   //private baseUrl = 'https://vpsapi.mechapp.se:8081';
-  //private baseUrl = 'https://vpsapi.mechapp.se'; // Nya på standard port
-  private baseUrl = 'http://localhost:5286';
+  private baseUrl = 'https://vpsapi.mechapp.se'; // Nya på standard port
+  //private baseUrl = 'http://localhost:5286';
 
   // Return "OK" string from server
   public testConnection(): Promise<TestConnection> {
