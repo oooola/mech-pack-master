@@ -8,6 +8,7 @@ import { LocalStorageService } from './storage.service';
   providedIn: 'root',
 })
 export class GlobalService {
+  private readonly onlineUserMaxAgeSeconds = 2 * 60 * 60;
   private statsUserTimeList: StatsUserTime[] = [];
   private currentOnlineUsers: StatsUserTime[] = [];
   private allCompanyNames: CompanyNames[] = [];
@@ -38,7 +39,7 @@ export class GlobalService {
 
   // Ersätter den globala listan med användare som är inloggade just nu.
   public setCurrentOnlineUsers(users: StatsUserTime[]): void {
-    this.currentOnlineUsers = users;
+    this.currentOnlineUsers = this.filterRecentlyActiveUsers(users);
   }
 
   // Returnerar den globala listan med användare som är inloggade just nu.
@@ -159,7 +160,7 @@ export class GlobalService {
 
     this.currentOnlineUsersLoadPromise = this.backendService.getStatActiveUsers(jwt)
       .then((response: unknown) => {
-        const users = this.normalizeStatsUserTimeList(response);
+        const users = this.filterRecentlyActiveUsers(this.normalizeStatsUserTimeList(response));
         this.currentOnlineUsers = users;
         return users;
       })
@@ -347,5 +348,18 @@ export class GlobalService {
     }
 
     return users;
+  }
+
+  private filterRecentlyActiveUsers(users: StatsUserTime[]): StatsUserTime[] {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+
+    return users.filter(user => {
+      const startTs = Number(user?.StartTS);
+      if (!Number.isFinite(startTs) || startTs <= 0) {
+        return false;
+      }
+
+      return nowInSeconds - startTs <= this.onlineUserMaxAgeSeconds;
+    });
   }
 }

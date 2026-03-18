@@ -25,6 +25,11 @@
       }
     </tbody>
   </table>
+
+  <div class="status-summary-row">
+    <span>Antal inloggade just nu</span>
+    <span>{{ totalLoggedInCount }}</span>
+  </div>
 </section>
 
 <div class="status-table-with-label">
@@ -35,6 +40,7 @@
         <tr>
           <th>Deltagare</th>
           <th>Grupp</th>
+          <th>Senast aktiv</th>
         </tr>
       </thead>
       <tbody>
@@ -42,10 +48,11 @@
           <tr>
             <td>{{ row.participantName }}</td>
             <td>{{ row.groupName }}</td>
+            <td>{{ row.lastActiveMinutesLabel }}</td>
           </tr>
         } @empty {
           <tr>
-            <td class="status-empty" colspan="2">Klicka på ett företag</td>
+            <td class="status-empty" colspan="3">Klicka på ett företag</td>
           </tr>
         }
       </tbody>

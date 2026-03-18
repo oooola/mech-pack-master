@@ -14,6 +14,7 @@ type CompanyStatusRow = {
 type ParticipantStatusRow = {
   participantName: string;
   groupName: string;
+  lastActiveMinutesLabel: string;
 };
 
 @Component({
@@ -34,6 +35,10 @@ export class CurrentStatusComponent implements OnInit {
   companyList: CompanyNames[] = [];
   companyFromBackend: Company | null = null;
   selectedCompanyId: number | null = null;
+
+  get totalLoggedInCount(): number {
+    return this.rows.reduce((sum, row) => sum + row.loggedInCount, 0);
+  }
 
   get selectedCompanyName(): string {
     if (this.companyFromBackend?.Name) {
@@ -143,13 +148,23 @@ export class CurrentStatusComponent implements OnInit {
     const onlineUsers = this.globalService
       .getCurrentOnlineUsers()
       .filter(item => item.CompanyId === companyId);
-    const onlineUserIds = new Set(onlineUsers.map(item => item.UserId));
+    const latestStartTsByUserId = new Map<number, number>();
 
-    onlineUserIds.forEach(userId => {
+    for (const item of onlineUsers) {
+      const startTs = Number(item.StartTS);
+      const currentStartTs = latestStartTsByUserId.get(item.UserId) ?? 0;
+      if (Number.isFinite(startTs) && startTs > currentStartTs) {
+        latestStartTsByUserId.set(item.UserId, startTs);
+      }
+    }
+
+    latestStartTsByUserId.forEach((startTs, userId) => {
       const user = usersById.get(userId);
+      const minutesSinceLastActive = Math.max(0, Math.floor((Date.now() / 1000 - startTs) / 60));
       rows.push({
         participantName: user?.name ?? `User ${userId}`,
         groupName: user?.groupName ?? '-',
+        lastActiveMinutesLabel: `${minutesSinceLastActive} min`,
       });
     });
 
