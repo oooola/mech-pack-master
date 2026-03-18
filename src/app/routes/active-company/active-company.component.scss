@@ -1,17 +1,71 @@
-.active-company-card {
-  margin: 16px;
-  padding: 24px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+.active-company-chart-card {
+  position: relative;
+  margin-top: 16px;
+  padding: 16px 16px 64px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  background: #111;
 }
 
-.active-company-card h2 {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
+.active-company-tabs {
+  display: block;
 }
 
-.active-company-card p {
+.active-company-chart-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  padding-top: 12px;
+}
+
+.active-company-chart {
+  display: block;
+}
+
+.active-company-empty {
   margin: 0;
-  color: #4b5563;
+  color: #9aa0a6;
+}
+
+.btn-glow {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  outline: none;
+  color: var(--text, #e8eaed);
+  background: rgb(255 255 255 / 6%);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn-glow:hover {
+  border-color: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 12%);
+}
+
+.btn-glow:focus-visible {
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 22%);
+}
+
+.btn-glow:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-glow.active-company-subtract-button {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+}
+
+.btn-glow.active-company-add-button {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
 }

@@ -1,49 +1,5 @@
 <page-header title="Fördelning" [nav]="['home', 'Fördelning']" />
 
-<section class="overview-chart-card">
-  <mat-tab-group class="overview-tabs" [(selectedIndex)]="selectedTabIndex">
-    <mat-tab label="Användningstid">
-      @if (hasUsageData) {
-        <div class="overview-chart-wrapper">
-          <canvas
-            class="overview-chart"
-            baseChart
-            [type]="'bar'"
-            [data]="usageChartData"
-            [options]="usageChartOptions">
-          </canvas>
-        </div>
-      } @else {
-        <p class="overview-empty">Ingen statistik att visa.</p>
-      }
-    </mat-tab>
-
-    <mat-tab label="Användare">
-      @if (hasUsersData) {
-        <div class="overview-chart-wrapper">
-          <canvas
-            class="overview-chart"
-            baseChart
-            [type]="'bar'"
-            [data]="usersChartData"
-            [options]="usersChartOptions">
-          </canvas>
-        </div>
-      } @else {
-        <p class="overview-empty">Ingen statistik att visa.</p>
-      }
-    </mat-tab>
-  </mat-tab-group>
-
-  <button class="btn-glow overview-subtract-button" type="button" (click)="decreaseDisplayLimit()" [disabled]="!canDecreaseDisplayLimit">
-    -10
-  </button>
-
-  <button class="btn-glow overview-add-button" type="button" (click)="increaseDisplayLimit()" [disabled]="!canIncreaseDisplayLimit">
-    +10
-  </button>
-</section>
-
 <section class="overview-pie-card">
   <mat-tab-group class="overview-tabs" [(selectedIndex)]="selectedDistributionTabIndex">
     <mat-tab label="Applikationsfördelning">

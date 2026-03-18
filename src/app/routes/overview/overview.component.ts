@@ -17,13 +17,9 @@ export class OverviewComponent implements OnInit {
   private readonly globalService = inject(GlobalService);
   private readonly backendService = inject(BackendService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private sortedUsageEntries: [number, number][] = [];
-  private sortedUsersEntries: [number, number][] = [];
   private sortedAppCodeEntries: [string, number][] = [];
   private sortedPlatformEntries: [string, number][] = [];
   private platformUserCounts: number[] = [];
-  private companyNameMap = new Map<number, string>();
-  private readonly stepSize = 10;
   private readonly pieColors = [
     '#1976d2',
     '#ef6c00',
@@ -37,94 +33,7 @@ export class OverviewComponent implements OnInit {
     '#9e9d24',
   ];
 
-  selectedTabIndex = 0;
   selectedDistributionTabIndex = 0;
-  displayLimit = 10;
-
-  usageChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: [],
-    datasets: [
-      {
-        data: [],
-        label: 'Total tid (timmar)',
-        backgroundColor: '#1976d2',
-        borderColor: '#125a9b',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  usageChartOptions: ChartConfiguration<'bar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    scales: {
-      x: {
-        ticks: {
-          color: '#9aa0a6',
-        },
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: '#9aa0a6',
-        },
-        title: {
-          display: true,
-          text: 'Timmar',
-          color: '#9aa0a6',
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-  };
-
-  usersChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: [],
-    datasets: [
-      {
-        data: [],
-        label: 'Unika användare',
-        backgroundColor: '#ef6c00',
-        borderColor: '#bb5500',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  usersChartOptions: ChartConfiguration<'bar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    scales: {
-      x: {
-        ticks: {
-          color: '#9aa0a6',
-        },
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: '#9aa0a6',
-          precision: 0,
-        },
-        title: {
-          display: true,
-          text: 'Unika användare',
-          color: '#9aa0a6',
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-  };
 
   appCodeChartData: ChartConfiguration<'pie'>['data'] = {
     labels: [],
@@ -203,8 +112,6 @@ export class OverviewComponent implements OnInit {
     },
   };
 
-  hasUsageData = false;
-  hasUsersData = false;
   hasAppCodeData = false;
   hasPlatformData = false;
 
@@ -223,8 +130,6 @@ export class OverviewComponent implements OnInit {
         this.globalService.setStatsUserTime(stats);
       }
 
-      const totalSecUsedByCompany = new Map<number, number>();
-      const uniqueUsersByCompany = new Map<number, Set<number>>();
       const totalSecUsedByAppCode = new Map<string, number>();
       const totalSecUsedByPlatform = new Map<string, number>();
       const uniqueUsersByPlatform = new Map<string, Set<number>>();
@@ -243,9 +148,6 @@ export class OverviewComponent implements OnInit {
         }
 
         if (Number.isFinite(secUsed)) {
-          const currentSecUsed = totalSecUsedByCompany.get(companyId) ?? 0;
-          totalSecUsedByCompany.set(companyId, currentSecUsed + secUsed);
-
           if (appCode.length > 0) {
             const currentAppCodeSecUsed = totalSecUsedByAppCode.get(appCode) ?? 0;
             totalSecUsedByAppCode.set(appCode, currentAppCodeSecUsed + secUsed);
@@ -258,10 +160,6 @@ export class OverviewComponent implements OnInit {
         }
 
         if (Number.isFinite(userId)) {
-          const userSet = uniqueUsersByCompany.get(companyId) ?? new Set<number>();
-          userSet.add(userId);
-          uniqueUsersByCompany.set(companyId, userSet);
-
           if (platform.length > 0) {
             const platformUserSet = uniqueUsersByPlatform.get(platform) ?? new Set<number>();
             platformUserSet.add(userId);
@@ -270,22 +168,6 @@ export class OverviewComponent implements OnInit {
         }
       }
 
-      this.sortedUsageEntries = Array.from(totalSecUsedByCompany.entries()).sort((a, b) => {
-        if (b[1] !== a[1]) {
-          return b[1] - a[1];
-        }
-
-        return a[0] - b[0];
-      });
-      this.sortedUsersEntries = Array.from(uniqueUsersByCompany.entries())
-        .map(([companyId, users]) => [companyId, users.size] as [number, number])
-        .sort((a, b) => {
-          if (b[1] !== a[1]) {
-            return b[1] - a[1];
-          }
-
-          return a[0] - b[0];
-        });
       this.sortedAppCodeEntries = Array.from(totalSecUsedByAppCode.entries()).sort((a, b) => {
         if (b[1] !== a[1]) {
           return b[1] - a[1];
@@ -301,37 +183,9 @@ export class OverviewComponent implements OnInit {
         return a[0].localeCompare(b[0], 'sv');
       });
       this.platformUserCounts = this.sortedPlatformEntries.map(([platform]) => uniqueUsersByPlatform.get(platform)?.size ?? 0);
-
-      const allCompanyIds = new Set<number>();
-      for (const [companyId] of this.sortedUsageEntries) {
-        allCompanyIds.add(companyId);
-      }
-      for (const [companyId] of this.sortedUsersEntries) {
-        allCompanyIds.add(companyId);
-      }
-
-      this.companyNameMap = this.getCompanyNameMap(Array.from(allCompanyIds));
-      this.applyDisplayLimit();
+      this.applyChartData();
     } catch (error) {
       console.error('Kunde inte ladda översiktsdiagram.', error);
-      this.usageChartData = {
-        labels: [],
-        datasets: [
-          {
-            ...this.usageChartData.datasets[0],
-            data: [],
-          },
-        ],
-      };
-      this.usersChartData = {
-        labels: [],
-        datasets: [
-          {
-            ...this.usersChartData.datasets[0],
-            data: [],
-          },
-        ],
-      };
       this.appCodeChartData = {
         labels: [],
         datasets: [
@@ -352,14 +206,9 @@ export class OverviewComponent implements OnInit {
           },
         ],
       };
-      this.sortedUsageEntries = [];
-      this.sortedUsersEntries = [];
       this.sortedAppCodeEntries = [];
       this.sortedPlatformEntries = [];
       this.platformUserCounts = [];
-      this.companyNameMap = new Map<number, string>();
-      this.hasUsageData = false;
-      this.hasUsersData = false;
       this.hasAppCodeData = false;
       this.hasPlatformData = false;
     } finally {
@@ -367,49 +216,7 @@ export class OverviewComponent implements OnInit {
     }
   }
 
-  increaseDisplayLimit(): void {
-    if (!this.canIncreaseDisplayLimit) {
-      return;
-    }
-
-    this.displayLimit += this.stepSize;
-    this.applyDisplayLimit();
-    this.cdr.markForCheck();
-  }
-
-  decreaseDisplayLimit(): void {
-    if (!this.canDecreaseDisplayLimit) {
-      return;
-    }
-
-    this.displayLimit = Math.max(this.stepSize, this.displayLimit - this.stepSize);
-    this.applyDisplayLimit();
-    this.cdr.markForCheck();
-  }
-
-  get canIncreaseDisplayLimit(): boolean {
-    const maxEntries = Math.max(this.sortedUsageEntries.length, this.sortedUsersEntries.length);
-    return this.displayLimit < maxEntries;
-  }
-
-  get canDecreaseDisplayLimit(): boolean {
-    return this.displayLimit > this.stepSize;
-  }
-
-  private applyDisplayLimit(): void {
-    const usageEntries = this.sortedUsageEntries.slice(0, this.displayLimit);
-    const usersEntries = this.sortedUsersEntries.slice(0, this.displayLimit);
-
-    const usageLabels = usageEntries.map(
-      ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
-    );
-    const usageDataInHours = usageEntries.map(([, totalSecUsed]) =>
-      Number((totalSecUsed / 3600).toFixed(2)),
-    );
-    const usersLabels = usersEntries.map(
-      ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
-    );
-    const usersData = usersEntries.map(([, totalUsers]) => totalUsers);
+  private applyChartData(): void {
     const appCodeLabels = this.sortedAppCodeEntries.map(([appCode]) => this.globalService.appCodeToName(appCode));
     const platformLabels = this.sortedPlatformEntries.map(([platform]) => platform);
     const appCodeDataInHours = this.sortedAppCodeEntries.map(([, totalSecUsed]) =>
@@ -420,26 +227,6 @@ export class OverviewComponent implements OnInit {
     );
     const pieColors = appCodeLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
     const platformPieColors = platformLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
-
-    this.usageChartData = {
-      labels: usageLabels,
-      datasets: [
-        {
-          ...this.usageChartData.datasets[0],
-          data: usageDataInHours,
-        },
-      ],
-    };
-
-    this.usersChartData = {
-      labels: usersLabels,
-      datasets: [
-        {
-          ...this.usersChartData.datasets[0],
-          data: usersData,
-        },
-      ],
-    };
 
     this.appCodeChartData = {
       labels: appCodeLabels,
@@ -463,29 +250,8 @@ export class OverviewComponent implements OnInit {
       ],
     };
 
-    this.hasUsageData = usageDataInHours.length > 0;
-    this.hasUsersData = usersData.length > 0;
     this.hasAppCodeData = appCodeDataInHours.length > 0;
     this.hasPlatformData = platformDataInHours.length > 0;
-  }
-
-  private getCompanyNameMap(companyIds: number[]): Map<number, string> {
-    if (companyIds.length === 0) {
-      return new Map<number, string>();
-    }
-
-    const allowedCompanyIds = new Set(companyIds);
-    const companyNameMap = new Map<number, string>();
-
-    for (const item of this.globalService.getAllCompanyNames()) {
-      const companyId = Number(item?.CompanyId);
-      const companyName = typeof item?.CompanyName === 'string' ? item.CompanyName.trim() : '';
-      if (allowedCompanyIds.has(companyId) && companyName.length > 0) {
-        companyNameMap.set(companyId, companyName);
-      }
-    }
-
-    return companyNameMap;
   }
 
   private normalizeStatsUserTimeList(response: unknown): StatsUserTime[] {

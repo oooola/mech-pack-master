@@ -12,7 +12,7 @@ import { ChartConfiguration } from 'chart.js';
 type CompanyOption = {
   id: number | 'all';
   companyLabel: string;
-  minutesLabel: string;
+  hoursLabel: string;
 };
 
 @Component({
@@ -31,7 +31,7 @@ export class ActiveUsersComponent implements OnInit {
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
   companyOptions: CompanyOption[] = [
-    { id: 'all', companyLabel: 'Alla företag', minutesLabel: '' },
+    { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
   ];
 
   private readonly globalService = inject(GlobalService);
@@ -314,13 +314,13 @@ export class ActiveUsersComponent implements OnInit {
     const companyNameMap = this.getCompanyNameMap(sortedCompanyEntries.map(([companyId]) => companyId));
 
     this.companyOptions = [
-      { id: 'all', companyLabel: 'Alla företag', minutesLabel: '' },
+      { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
       ...sortedCompanyEntries.map(([companyId, totalSecUsed]) => {
-        const totalMinutes = Math.round(totalSecUsed / 60);
+        const totalHours = Math.round(totalSecUsed / 3600);
         return {
           id: companyId,
           companyLabel: companyNameMap.get(companyId) || `Företag ${companyId}`,
-          minutesLabel: `Minuter: ${totalMinutes}`,
+          hoursLabel: `Timmar: ${totalHours}`,
         };
       }),
     ];

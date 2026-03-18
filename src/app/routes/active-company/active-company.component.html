@@ -1,6 +1,45 @@
 <page-header title="Aktivitet Företag" [nav]="['home', 'Aktivitet Företag']" />
 
-<section class="active-company-card">
-  <h2>Aktivitet Företag</h2>
-  <p>Den här sidan är skapad och kopplad till routing och sidmeny.</p>
+<section class="active-company-chart-card">
+  <mat-tab-group class="active-company-tabs" [(selectedIndex)]="selectedTabIndex">
+    <mat-tab label="Användningstid">
+      @if (hasUsageData) {
+        <div class="active-company-chart-wrapper">
+          <canvas
+            class="active-company-chart"
+            baseChart
+            [type]="'bar'"
+            [data]="usageChartData"
+            [options]="usageChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <p class="active-company-empty">Ingen statistik att visa.</p>
+      }
+    </mat-tab>
+
+    <mat-tab label="Unika inloggningar">
+      @if (hasUsersData) {
+        <div class="active-company-chart-wrapper">
+          <canvas
+            class="active-company-chart"
+            baseChart
+            [type]="'bar'"
+            [data]="usersChartData"
+            [options]="usersChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <p class="active-company-empty">Ingen statistik att visa.</p>
+      }
+    </mat-tab>
+  </mat-tab-group>
+
+  <button class="btn-glow active-company-subtract-button" type="button" (click)="decreaseDisplayLimit()" [disabled]="!canDecreaseDisplayLimit">
+    -10
+  </button>
+
+  <button class="btn-glow active-company-add-button" type="button" (click)="increaseDisplayLimit()" [disabled]="!canIncreaseDisplayLimit">
+    +10
+  </button>
 </section>
