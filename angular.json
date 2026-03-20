@@ -38,7 +38,8 @@
           },
           "configurations": {
             "production": {
-              "baseHref": "/mech-app-master/",
+              "outputPath": "dist/master",
+              "baseHref": "/master/",
               "budgets": [
                 {
                   "type": "initial",
