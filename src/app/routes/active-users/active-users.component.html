@@ -65,3 +65,26 @@
     }
   </mat-select>
 </mat-form-field>
+
+<section class="active-users-summary-card">
+  <table class="active-users-summary-table">
+    <thead>
+      <tr>
+        <th>Nyckeltal</th>
+        <th>Värde</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of summaryRows; track row.label) {
+        <tr>
+          <td>{{ row.label }}</td>
+          <td>{{ row.value }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td class="active-users-summary-empty" colspan="2">Ingen statistik att visa.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

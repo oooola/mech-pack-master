@@ -15,6 +15,11 @@ type CompanyOption = {
   hoursLabel: string;
 };
 
+type SummaryRow = {
+  label: string;
+  value: number | string;
+};
+
 @Component({
   selector: 'app-active-users',
   templateUrl: './active-users.component.html',
@@ -30,6 +35,7 @@ export class ActiveUsersComponent implements OnInit {
   showMatkurs = false;
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
+  summaryRows: SummaryRow[] = [];
   companyOptions: CompanyOption[] = [
     { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
   ];
@@ -130,6 +136,8 @@ export class ActiveUsersComponent implements OnInit {
   // Hämtar statistik, bygger filteralternativ och uppdaterar grafen.
   async onPageLoad() {
     try {
+      await this.globalService.ensureAllCompanyNamesLoaded();
+
       // Hämta statistik direkt när sidan laddas om den inte redan finns cachad.
       let stats = this.globalService.getStatsUserTime();
       if (stats.length === 0) {
@@ -144,6 +152,7 @@ export class ActiveUsersComponent implements OnInit {
     } catch (error) {
       console.error('Kunde inte ladda statistik till active-users.', error);
       this.allStats = [];
+      this.summaryRows = [];
       this.horizontalDateLabels = [];
       this.activeUsersDataset = { ...this.activeUsersDataset, data: [] };
       this.activeUsersCountDataset = { ...this.activeUsersCountDataset, data: [] };
@@ -211,6 +220,8 @@ export class ActiveUsersComponent implements OnInit {
       this.selectedCompanyId === 'all'
         ? this.allStats
         : this.allStats.filter(item => item.CompanyId === this.selectedCompanyId);
+
+    this.summaryRows = this.buildSummaryRows(filteredStats);
 
     const chartSeries = this.getChartSeries(filteredStats);
     this.horizontalDateLabels = chartSeries.labels;
@@ -287,6 +298,83 @@ export class ActiveUsersComponent implements OnInit {
     }
 
     return { labels, timeInHours, userCounts };
+  }
+
+  private buildSummaryRows(stats: StatsUserTime[]): SummaryRow[] {
+    if (!Array.isArray(stats) || stats.length === 0) {
+      return [
+        { label: 'Unika användare Total', value: 0 },
+        { label: 'Unika användare Månad', value: 0 },
+        { label: 'Unika användare Vecka', value: 0 },
+        { label: 'Unika användare Max på en dag', value: 0 },
+      ];
+    }
+
+    const dayFormatter = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Stockholm' });
+    const totalUserIds = new Set<number>();
+    const monthUserIds = new Set<number>();
+    const weekUserIds = new Set<number>();
+    const userIdsByDay = new Map<string, Set<number>>();
+    let maxTs = 0;
+
+    for (const item of stats) {
+      const startTs = Number(item?.StartTS);
+      if (Number.isFinite(startTs)) {
+        maxTs = Math.max(maxTs, startTs);
+      }
+    }
+
+    const monthCutoffTs = maxTs > 0 ? maxTs - (30 * 24 * 60 * 60) : 0;
+    const weekCutoffTs = maxTs > 0 ? maxTs - (7 * 24 * 60 * 60) : 0;
+
+    for (const item of stats) {
+      const userId = Number(item?.UserId);
+      const startTs = Number(item?.StartTS);
+      if (!Number.isFinite(userId)) {
+        continue;
+      }
+
+      totalUserIds.add(userId);
+
+      if (Number.isFinite(startTs)) {
+        if (startTs >= monthCutoffTs) {
+          monthUserIds.add(userId);
+        }
+
+        if (startTs >= weekCutoffTs) {
+          weekUserIds.add(userId);
+        }
+
+        const dayKey = dayFormatter.format(new Date(startTs * 1000));
+        const dayUserIds = userIdsByDay.get(dayKey) ?? new Set<number>();
+        dayUserIds.add(userId);
+        userIdsByDay.set(dayKey, dayUserIds);
+      }
+    }
+
+    let maxUsersInSingleDay = 0;
+    for (const dayUserIds of userIdsByDay.values()) {
+      maxUsersInSingleDay = Math.max(maxUsersInSingleDay, dayUserIds.size);
+    }
+
+    return [
+      {
+        label: 'Unika användare Total',
+        value: totalUserIds.size,
+      },
+      {
+        label: 'Unika användare Månad',
+        value: monthUserIds.size,
+      },
+      {
+        label: 'Unika användare Vecka',
+        value: weekUserIds.size,
+      },
+      {
+        label: 'Unika användare Max på en dag',
+        value: maxUsersInSingleDay,
+      },
+    ];
   }
 
   // Skapar och sorterar företagsalternativ med total användningstid.
