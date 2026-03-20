@@ -172,12 +172,13 @@
         <div class="company-details-date-control">
           <button
             type="button"
-            class="company-details-date-button material-icons"
+            class="company-details-date-button"
             (mousedown)="$event.preventDefault()"
             (click)="onOpenLicenseDatePicker(licenseDateInput)"
             aria-label="Öppna datumväljare"
+            title="Öppna datumväljare"
           >
-            calendar_month
+            <span class="material-icons" aria-hidden="true">event</span>
           </button>
           <input
             #licenseDateInput
