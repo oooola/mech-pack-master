@@ -35,18 +35,93 @@
 }
 
 .mtkurs-checkbox {
-  color: #43a047;
+  color: #ef6c00;
   font-weight: 500;
-  --mat-checkbox-label-text-color: #43a047;
-  --mdc-checkbox-selected-icon-color: #43a047;
-  --mdc-checkbox-selected-hover-icon-color: #43a047;
-  --mdc-checkbox-selected-focus-icon-color: #43a047;
-  --mdc-checkbox-selected-pressed-icon-color: #43a047;
+  --mat-checkbox-label-text-color: #ef6c00;
+  --mdc-checkbox-selected-icon-color: #ef6c00;
+  --mdc-checkbox-selected-hover-icon-color: #ef6c00;
+  --mdc-checkbox-selected-focus-icon-color: #ef6c00;
+  --mdc-checkbox-selected-pressed-icon-color: #ef6c00;
   --mdc-checkbox-selected-checkmark-color: #fff;
 }
 
 .mtkurs-checkbox .mdc-label {
-  color: #43a047;
+  color: #ef6c00;
+}
+
+.isointro-checkbox {
+  color: #2e7d32;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #2e7d32;
+  --mdc-checkbox-selected-icon-color: #2e7d32;
+  --mdc-checkbox-selected-hover-icon-color: #2e7d32;
+  --mdc-checkbox-selected-focus-icon-color: #2e7d32;
+  --mdc-checkbox-selected-pressed-icon-color: #2e7d32;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.isointro-checkbox .mdc-label {
+  color: #2e7d32;
+}
+
+.isokurs-checkbox {
+  color: #1976d2;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #1976d2;
+  --mdc-checkbox-selected-icon-color: #1976d2;
+  --mdc-checkbox-selected-hover-icon-color: #1976d2;
+  --mdc-checkbox-selected-focus-icon-color: #1976d2;
+  --mdc-checkbox-selected-pressed-icon-color: #1976d2;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.isokurs-checkbox .mdc-label {
+  color: #1976d2;
+}
+
+.ritningslasning-checkbox {
+  color: #00838f;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #00838f;
+  --mdc-checkbox-selected-icon-color: #00838f;
+  --mdc-checkbox-selected-hover-icon-color: #00838f;
+  --mdc-checkbox-selected-focus-icon-color: #00838f;
+  --mdc-checkbox-selected-pressed-icon-color: #00838f;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.ritningslasning-checkbox .mdc-label {
+  color: #00838f;
+}
+
+.kunskapstest-checkbox {
+  color: #c62828;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #c62828;
+  --mdc-checkbox-selected-icon-color: #c62828;
+  --mdc-checkbox-selected-hover-icon-color: #c62828;
+  --mdc-checkbox-selected-focus-icon-color: #c62828;
+  --mdc-checkbox-selected-pressed-icon-color: #c62828;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.kunskapstest-checkbox .mdc-label {
+  color: #c62828;
+}
+
+.mekmat-checkbox {
+  color: #8e24aa;
+  font-weight: 500;
+  --mat-checkbox-label-text-color: #8e24aa;
+  --mdc-checkbox-selected-icon-color: #8e24aa;
+  --mdc-checkbox-selected-hover-icon-color: #8e24aa;
+  --mdc-checkbox-selected-focus-icon-color: #8e24aa;
+  --mdc-checkbox-selected-pressed-icon-color: #8e24aa;
+  --mdc-checkbox-selected-checkmark-color: #fff;
+}
+
+.mekmat-checkbox .mdc-label {
+  color: #8e24aa;
 }
 
 .company-dropdown {

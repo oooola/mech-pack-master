@@ -40,10 +40,41 @@
   >
     MätKurs
   </mat-checkbox>
-  <mat-checkbox>IsoIntro</mat-checkbox>
-  <mat-checkbox>IsoKurs</mat-checkbox>
-  <mat-checkbox>MekMät</mat-checkbox>
-  <mat-checkbox>CncSim</mat-checkbox>
+  <mat-checkbox
+    class="isointro-checkbox"
+    [checked]="showIsoIntro"
+    (change)="onIsoIntroToggle($event.checked)"
+  >
+    IsoIntro
+  </mat-checkbox>
+  <mat-checkbox
+    class="isokurs-checkbox"
+    [checked]="showIsoKurs"
+    (change)="onIsoKursToggle($event.checked)"
+  >
+    IsoKurs
+  </mat-checkbox>
+  <mat-checkbox
+    class="ritningslasning-checkbox"
+    [checked]="showRitningslasning"
+    (change)="onRitningslasningToggle($event.checked)"
+  >
+    Ritningsläsning
+  </mat-checkbox>
+  <mat-checkbox
+    class="kunskapstest-checkbox"
+    [checked]="showKunskapstest"
+    (change)="onKunskapstestToggle($event.checked)"
+  >
+    Kunskapstest
+  </mat-checkbox>
+  <mat-checkbox
+    class="mekmat-checkbox"
+    [checked]="showMekmat"
+    (change)="onMekmatToggle($event.checked)"
+  >
+    MekMät
+  </mat-checkbox>
 </div>
 
 <mat-form-field class="company-dropdown" appearance="outline">

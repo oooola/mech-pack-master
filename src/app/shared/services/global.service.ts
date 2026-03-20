@@ -22,7 +22,7 @@ export class GlobalService {
   ) {}
 
   public getBuildVersion():string {
-    return '1.4.0.0';
+    return '1.5.0.0';
   }
 
   // Sparar senaste hämtade användningstider i minnet.
@@ -80,6 +80,36 @@ export class GlobalService {
       default:
         return appCode;
     }
+  }
+
+  public appNameToChartColor(appName: string): string {
+    const normalizedAppName = appName.trim().toUpperCase();
+
+    switch (normalizedAppName) {
+      case 'ISOKURS':
+        return '#1976d2';
+      case 'MÄTKURS':
+      case 'MATKURS':
+        return '#ef6c00';
+      case 'ISOINTRO':
+        return '#2e7d32';
+      case 'MEKMÄT':
+      case 'MEKMAT':
+        return '#8e24aa';
+      case 'KUNSKAPSTEST':
+        return '#c62828';
+      case 'RITNINGSLÄSNING':
+      case 'RITNINGSLASNING':
+        return '#00838f';
+      case 'MECHAPP':
+        return '#6d4c41';
+      default:
+        return '#455a64';
+    }
+  }
+
+  public appCodeToChartColor(appCode: string): string {
+    return this.appNameToChartColor(this.appCodeToName(appCode));
   }
 
   // Returns "Android" | "iPhone" | "iPad" | "Mac" | "Windows" | "Linux" | "CromeBook" | "Unknown";

@@ -225,7 +225,7 @@ export class OverviewComponent implements OnInit {
     const platformDataInHours = this.sortedPlatformEntries.map(([, totalSecUsed]) =>
       Number((totalSecUsed / 3600).toFixed(2)),
     );
-    const pieColors = appCodeLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
+    const pieColors = this.sortedAppCodeEntries.map(([appCode]) => this.globalService.appCodeToChartColor(appCode));
     const platformPieColors = platformLabels.map((_, index) => this.pieColors[index % this.pieColors.length]);
 
     this.appCodeChartData = {

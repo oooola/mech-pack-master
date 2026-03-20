@@ -33,6 +33,11 @@ export class ActiveUsersComponent implements OnInit {
 
   showAllPrograms = true;
   showMatkurs = false;
+  showIsoIntro = false;
+  showIsoKurs = false;
+  showRitningslasning = false;
+  showKunskapstest = false;
+  showMekmat = false;
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
   summaryRows: SummaryRow[] = [];
@@ -44,7 +49,7 @@ export class ActiveUsersComponent implements OnInit {
   private readonly backendService = inject(BackendService);
   private readonly cdr = inject(ChangeDetectorRef);
   private allStats: StatsUserTime[] = [];
-  
+
   private horizontalDateLabels = new Array<string>();
 
   private activeUsersDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
@@ -65,12 +70,111 @@ export class ActiveUsersComponent implements OnInit {
     tension: 0.2,
   };
 
-  private readonly matkursDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
-    data: [8, 14, 11, 13, 17, 16, 12, 10, 9, 15, 18, 14, 13, 11, 8],
+  private matkursDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
     label: 'MätKurs',
     fill: true,
-    borderColor: '#43a047',
-    backgroundColor: 'rgba(67, 160, 71, 0.16)',
+    borderColor: this.globalService.appNameToChartColor('MätKurs'),
+    backgroundColor: 'rgba(239, 108, 0, 0.16)',
+    tension: 0.2,
+  };
+
+  private matkursCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'MätKurs',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('MätKurs'),
+    backgroundColor: 'rgba(239, 108, 0, 0.16)',
+    tension: 0.2,
+  };
+
+  private isoIntroDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'IsoIntro',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('IsoIntro'),
+    backgroundColor: 'rgba(46, 125, 50, 0.16)',
+    tension: 0.2,
+  };
+
+  private isoIntroCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'IsoIntro',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('IsoIntro'),
+    backgroundColor: 'rgba(46, 125, 50, 0.16)',
+    tension: 0.2,
+  };
+
+  private isoKursDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'IsoKurs',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('IsoKurs'),
+    backgroundColor: 'rgba(25, 118, 210, 0.16)',
+    tension: 0.2,
+  };
+
+  private isoKursCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'IsoKurs',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('IsoKurs'),
+    backgroundColor: 'rgba(25, 118, 210, 0.16)',
+    tension: 0.2,
+  };
+
+  private ritningslasningDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'Ritningsläsning',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('Ritningsläsning'),
+    backgroundColor: 'rgba(0, 131, 143, 0.16)',
+    tension: 0.2,
+  };
+
+  private ritningslasningCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'Ritningsläsning',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('Ritningsläsning'),
+    backgroundColor: 'rgba(0, 131, 143, 0.16)',
+    tension: 0.2,
+  };
+
+  private kunskapstestDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'Kunskapstest',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('Kunskapstest'),
+    backgroundColor: 'rgba(198, 40, 40, 0.16)',
+    tension: 0.2,
+  };
+
+  private kunskapstestCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'Kunskapstest',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('Kunskapstest'),
+    backgroundColor: 'rgba(198, 40, 40, 0.16)',
+    tension: 0.2,
+  };
+
+  private mekmatDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'MekMät',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('MekMät'),
+    backgroundColor: 'rgba(142, 36, 170, 0.16)',
+    tension: 0.2,
+  };
+
+  private mekmatCountDataset: ChartConfiguration<'line'>['data']['datasets'][number] = {
+    data: [],
+    label: 'MekMät',
+    fill: true,
+    borderColor: this.globalService.appNameToChartColor('MekMät'),
+    backgroundColor: 'rgba(142, 36, 170, 0.16)',
     tension: 0.2,
   };
 
@@ -168,6 +272,42 @@ export class ActiveUsersComponent implements OnInit {
   onMatkursToggle(checked: boolean) {
     this.showMatkurs = checked;
     this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
+    this.cdr.markForCheck();
+  }
+
+  onIsoIntroToggle(checked: boolean) {
+    this.showIsoIntro = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
+    this.cdr.markForCheck();
+  }
+
+  onIsoKursToggle(checked: boolean) {
+    this.showIsoKurs = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
+    this.cdr.markForCheck();
+  }
+
+  onRitningslasningToggle(checked: boolean) {
+    this.showRitningslasning = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
+    this.cdr.markForCheck();
+  }
+
+  onKunskapstestToggle(checked: boolean) {
+    this.showKunskapstest = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
+    this.cdr.markForCheck();
+  }
+
+  onMekmatToggle(checked: boolean) {
+    this.showMekmat = checked;
+    this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
     this.cdr.markForCheck();
   }
 
@@ -175,6 +315,7 @@ export class ActiveUsersComponent implements OnInit {
   onAllProgramsToggle(checked: boolean) {
     this.showAllPrograms = checked;
     this.activeTimeChartData = this.buildActiveTimeChartData();
+    this.activeCountChartData = this.buildActiveCountChartData();
     this.cdr.markForCheck();
   }
 
@@ -199,6 +340,21 @@ export class ActiveUsersComponent implements OnInit {
     if (this.showMatkurs) {
       datasets.push(this.matkursDataset);
     }
+    if (this.showIsoIntro) {
+      datasets.push(this.isoIntroDataset);
+    }
+    if (this.showIsoKurs) {
+      datasets.push(this.isoKursDataset);
+    }
+    if (this.showRitningslasning) {
+      datasets.push(this.ritningslasningDataset);
+    }
+    if (this.showKunskapstest) {
+      datasets.push(this.kunskapstestDataset);
+    }
+    if (this.showMekmat) {
+      datasets.push(this.mekmatDataset);
+    }
 
     return {
       labels: this.horizontalDateLabels,
@@ -208,9 +364,32 @@ export class ActiveUsersComponent implements OnInit {
 
   // Bygger diagramdata för tabben Aktiv Antal.
   private buildActiveCountChartData(): ChartConfiguration<'line'>['data'] {
+    const datasets: ChartConfiguration<'line'>['data']['datasets'] = [];
+    if (this.showAllPrograms) {
+      datasets.push(this.activeUsersCountDataset);
+    }
+    if (this.showMatkurs) {
+      datasets.push(this.matkursCountDataset);
+    }
+    if (this.showIsoIntro) {
+      datasets.push(this.isoIntroCountDataset);
+    }
+    if (this.showIsoKurs) {
+      datasets.push(this.isoKursCountDataset);
+    }
+    if (this.showRitningslasning) {
+      datasets.push(this.ritningslasningCountDataset);
+    }
+    if (this.showKunskapstest) {
+      datasets.push(this.kunskapstestCountDataset);
+    }
+    if (this.showMekmat) {
+      datasets.push(this.mekmatCountDataset);
+    }
+
     return {
       labels: this.horizontalDateLabels,
-      datasets: [this.activeUsersCountDataset],
+      datasets,
     };
   }
 
@@ -224,6 +403,18 @@ export class ActiveUsersComponent implements OnInit {
     this.summaryRows = this.buildSummaryRows(filteredStats);
 
     const chartSeries = this.getChartSeries(filteredStats);
+    const matkursStats = this.getStatsForApp(filteredStats, 'MätKurs');
+    const matkursChartSeries = this.getChartSeries(matkursStats);
+    const isoIntroStats = this.getStatsForApp(filteredStats, 'IsoIntro');
+    const isoIntroChartSeries = this.getChartSeries(isoIntroStats);
+    const isoKursStats = this.getStatsForApp(filteredStats, 'IsoKurs');
+    const isoKursChartSeries = this.getChartSeries(isoKursStats);
+    const ritningslasningStats = this.getStatsForApp(filteredStats, 'Ritningsläsning');
+    const ritningslasningChartSeries = this.getChartSeries(ritningslasningStats);
+    const kunskapstestStats = this.getStatsForApp(filteredStats, 'Kunskapstest');
+    const kunskapstestChartSeries = this.getChartSeries(kunskapstestStats);
+    const mekmatStats = this.getStatsForApp(filteredStats, 'MekMät');
+    const mekmatChartSeries = this.getChartSeries(mekmatStats);
     this.horizontalDateLabels = chartSeries.labels;
     this.activeUsersDataset = {
       ...this.activeUsersDataset,
@@ -233,8 +424,63 @@ export class ActiveUsersComponent implements OnInit {
       ...this.activeUsersCountDataset,
       data: chartSeries.userCounts,
     };
+    this.matkursDataset = {
+      ...this.matkursDataset,
+      data: matkursChartSeries.timeInHours,
+    };
+    this.matkursCountDataset = {
+      ...this.matkursCountDataset,
+      data: matkursChartSeries.userCounts,
+    };
+    this.isoIntroDataset = {
+      ...this.isoIntroDataset,
+      data: isoIntroChartSeries.timeInHours,
+    };
+    this.isoIntroCountDataset = {
+      ...this.isoIntroCountDataset,
+      data: isoIntroChartSeries.userCounts,
+    };
+    this.isoKursDataset = {
+      ...this.isoKursDataset,
+      data: isoKursChartSeries.timeInHours,
+    };
+    this.isoKursCountDataset = {
+      ...this.isoKursCountDataset,
+      data: isoKursChartSeries.userCounts,
+    };
+    this.ritningslasningDataset = {
+      ...this.ritningslasningDataset,
+      data: ritningslasningChartSeries.timeInHours,
+    };
+    this.ritningslasningCountDataset = {
+      ...this.ritningslasningCountDataset,
+      data: ritningslasningChartSeries.userCounts,
+    };
+    this.kunskapstestDataset = {
+      ...this.kunskapstestDataset,
+      data: kunskapstestChartSeries.timeInHours,
+    };
+    this.kunskapstestCountDataset = {
+      ...this.kunskapstestCountDataset,
+      data: kunskapstestChartSeries.userCounts,
+    };
+    this.mekmatDataset = {
+      ...this.mekmatDataset,
+      data: mekmatChartSeries.timeInHours,
+    };
+    this.mekmatCountDataset = {
+      ...this.mekmatCountDataset,
+      data: mekmatChartSeries.userCounts,
+    };
     this.activeTimeChartData = this.buildActiveTimeChartData();
     this.activeCountChartData = this.buildActiveCountChartData();
+  }
+
+  private getStatsForApp(stats: StatsUserTime[], appName: string): StatsUserTime[] {
+    return stats.filter(item => {
+      const appCode = typeof item?.AppCode === 'string' ? item.AppCode : '';
+      return this.globalService.appCodeToName(appCode) === appName;
+    });
   }
 
   private getChartSeries(stats: StatsUserTime[]): { labels: string[]; timeInHours: number[]; userCounts: number[] } {
