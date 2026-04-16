@@ -20,6 +20,11 @@ type SummaryRow = {
   value: number | string;
 };
 
+type ChartPeriodOption = {
+  id: '1w' | '1m' | '3m' | 'ytd' | '1y' | 'all';
+  label: string;
+};
+
 @Component({
   selector: 'app-active-users',
   templateUrl: './active-users.component.html',
@@ -29,8 +34,6 @@ type SummaryRow = {
   imports: [PageHeaderComponent, BaseChartDirective, MatCheckboxModule, MatFormFieldModule, MatSelectModule, MatTabsModule],
 })
 export class ActiveUsersComponent implements OnInit {
-  private readonly pointCount = 15;
-
   showAllPrograms = true;
   showMatkurs = false;
   showIsoIntro = false;
@@ -40,9 +43,18 @@ export class ActiveUsersComponent implements OnInit {
   showMekmat = false;
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
+  selectedChartPeriodId: ChartPeriodOption['id'] = '1m';
   summaryRows: SummaryRow[] = [];
   companyOptions: CompanyOption[] = [
     { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
+  ];
+  chartPeriodOptions: ChartPeriodOption[] = [
+    { id: '1w', label: '1 vecka' },
+    { id: '1m', label: '1 månad' },
+    { id: '3m', label: '3 månader' },
+    { id: 'ytd', label: 'i år' },
+    { id: '1y', label: '1 år' },
+    { id: 'all', label: 'Sedan start' },
   ];
 
   private readonly globalService = inject(GlobalService);
@@ -190,6 +202,8 @@ export class ActiveUsersComponent implements OnInit {
         offset: true,
         ticks: {
           color: '#9aa0a6',
+          autoSkip: true,
+          maxTicksLimit: 12,
         },
       },
       y: {
@@ -215,6 +229,8 @@ export class ActiveUsersComponent implements OnInit {
         offset: true,
         ticks: {
           color: '#9aa0a6',
+          autoSkip: true,
+          maxTicksLimit: 12,
         },
       },
       y: {
@@ -326,6 +342,12 @@ export class ActiveUsersComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  onChartPeriodSelectionChange(selectedChartPeriodId: ChartPeriodOption['id']) {
+    this.selectedChartPeriodId = selectedChartPeriodId;
+    this.updateChartForSelection();
+    this.cdr.markForCheck();
+  }
+
   // Returnerar det aktuellt valda företagsalternativet.
   get selectedCompanyOption(): CompanyOption | undefined {
     return this.companyOptions.find(option => option.id === this.selectedCompanyId);
@@ -399,21 +421,26 @@ export class ActiveUsersComponent implements OnInit {
       this.selectedCompanyId === 'all'
         ? this.allStats
         : this.allStats.filter(item => item.CompanyId === this.selectedCompanyId);
+    const usageChartStats = filteredStats.filter(item => {
+      const appCode = typeof item?.AppCode === 'string' ? item.AppCode : '';
+      return this.globalService.shouldIncludeAppCodeInUsageCharts(appCode);
+    });
 
     this.summaryRows = this.buildSummaryRows(filteredStats);
 
-    const chartSeries = this.getChartSeries(filteredStats);
-    const matkursStats = this.getStatsForApp(filteredStats, 'MätKurs');
+    const chartStats = this.filterStatsBySelectedPeriod(usageChartStats);
+    const chartSeries = this.getChartSeries(chartStats);
+    const matkursStats = this.getStatsForApp(chartStats, 'MätKurs');
     const matkursChartSeries = this.getChartSeries(matkursStats);
-    const isoIntroStats = this.getStatsForApp(filteredStats, 'IsoIntro');
+    const isoIntroStats = this.getStatsForApp(chartStats, 'IsoIntro');
     const isoIntroChartSeries = this.getChartSeries(isoIntroStats);
-    const isoKursStats = this.getStatsForApp(filteredStats, 'IsoKurs');
+    const isoKursStats = this.getStatsForApp(chartStats, 'IsoKurs');
     const isoKursChartSeries = this.getChartSeries(isoKursStats);
-    const ritningslasningStats = this.getStatsForApp(filteredStats, 'Ritningsläsning');
+    const ritningslasningStats = this.getStatsForApp(chartStats, 'Ritningsläsning');
     const ritningslasningChartSeries = this.getChartSeries(ritningslasningStats);
-    const kunskapstestStats = this.getStatsForApp(filteredStats, 'Kunskapstest');
+    const kunskapstestStats = this.getStatsForApp(chartStats, 'Kunskapstest');
     const kunskapstestChartSeries = this.getChartSeries(kunskapstestStats);
-    const mekmatStats = this.getStatsForApp(filteredStats, 'MekMät');
+    const mekmatStats = this.getStatsForApp(chartStats, 'MekMät');
     const mekmatChartSeries = this.getChartSeries(mekmatStats);
     this.horizontalDateLabels = chartSeries.labels;
     this.activeUsersDataset = {
@@ -483,6 +510,54 @@ export class ActiveUsersComponent implements OnInit {
     });
   }
 
+  private filterStatsBySelectedPeriod(stats: StatsUserTime[]): StatsUserTime[] {
+    if (!Array.isArray(stats) || stats.length === 0 || this.selectedChartPeriodId === 'all') {
+      return stats;
+    }
+
+    let maxTs = 0;
+    for (const item of stats) {
+      const startTs = Number(item?.StartTS);
+      if (Number.isFinite(startTs)) {
+        maxTs = Math.max(maxTs, startTs);
+      }
+    }
+
+    if (maxTs === 0) {
+      return [];
+    }
+
+    const endDate = new Date(maxTs * 1000);
+    endDate.setHours(23, 59, 59, 999);
+
+    const startDate = new Date(endDate);
+    switch (this.selectedChartPeriodId) {
+      case '1w':
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case '1m':
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+      case '3m':
+        startDate.setMonth(startDate.getMonth() - 3);
+        break;
+      case 'ytd':
+        startDate.setMonth(0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case '1y':
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        break;
+    }
+
+    if (this.selectedChartPeriodId !== 'ytd') {
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    const startTs = Math.floor(startDate.getTime() / 1000);
+    return stats.filter(item => Number(item?.StartTS) >= startTs);
+  }
+
   private getChartSeries(stats: StatsUserTime[]): { labels: string[]; timeInHours: number[]; userCounts: number[] } {
     if (!Array.isArray(stats) || stats.length === 0) {
       return {
@@ -495,6 +570,7 @@ export class ActiveUsersComponent implements OnInit {
     const dayFormatter = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Stockholm' });
     const secUsedByDay = new Map<string, number>();
     const userIdsByDay = new Map<string, Set<number>>();
+    let minTs = Number.POSITIVE_INFINITY;
     let maxTs = 0;
 
     for (const item of stats) {
@@ -505,6 +581,7 @@ export class ActiveUsersComponent implements OnInit {
         continue;
       }
 
+      minTs = Math.min(minTs, startTs);
       maxTs = Math.max(maxTs, startTs);
       const dayKey = dayFormatter.format(new Date(startTs * 1000));
 
@@ -520,7 +597,7 @@ export class ActiveUsersComponent implements OnInit {
       }
     }
 
-    if (maxTs === 0) {
+    if (maxTs === 0 || !Number.isFinite(minTs)) {
       return {
         labels: [],
         timeInHours: [],
@@ -531,12 +608,12 @@ export class ActiveUsersComponent implements OnInit {
     const labels: string[] = [];
     const timeInHours: number[] = [];
     const userCounts: number[] = [];
+    const firstDate = new Date(minTs * 1000);
     const endDate = new Date(maxTs * 1000);
+    firstDate.setHours(12, 0, 0, 0);
     endDate.setHours(12, 0, 0, 0);
 
-    for (let index = this.pointCount - 1; index >= 0; index--) {
-      const currentDate = new Date(endDate);
-      currentDate.setDate(endDate.getDate() - index);
+    for (const currentDate = new Date(firstDate); currentDate <= endDate; currentDate.setDate(currentDate.getDate() + 1)) {
       const dayKey = dayFormatter.format(currentDate);
       labels.push(StatsHelpers.toDateLabelFromDate(currentDate));
       timeInHours.push(Number(((secUsedByDay.get(dayKey) ?? 0) / 3600).toFixed(2)));

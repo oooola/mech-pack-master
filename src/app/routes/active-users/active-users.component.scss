@@ -14,9 +14,16 @@
 
 .active-users-filters {
   display: flex;
+  align-items: center;
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 14px;
+}
+
+.chart-period-dropdown {
+  width: min(100%, 180px);
+  flex: 0 0 180px;
+  --mdc-outlined-text-field-container-shape: var(--mat-sys-corner-medium);
 }
 
 .all-programs-checkbox {
@@ -197,5 +204,10 @@
 @media (width <= 1024px) {
   .active-users-chart-wrapper {
     height: clamp(260px, calc(100vh - 340px), 400px);
+  }
+
+  .chart-period-dropdown {
+    flex-basis: 100%;
+    width: min(100%, 280px);
   }
 }

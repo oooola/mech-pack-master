@@ -112,6 +112,11 @@ export class GlobalService {
     return this.appNameToChartColor(this.appCodeToName(appCode));
   }
 
+  public shouldIncludeAppCodeInUsageCharts(appCode: string): boolean {
+    const normalizedAppCode = appCode.trim().toUpperCase();
+    return normalizedAppCode !== 'DO1' && normalizedAppCode !== 'DO2';
+  }
+
   // Returns "Android" | "iPhone" | "iPad" | "Mac" | "Windows" | "Linux" | "CromeBook" | "Unknown";
   public platformCodeToName(platformCode: string): string {
     const normalizedAppCode = platformCode.trim().toUpperCase();

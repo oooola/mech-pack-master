@@ -33,6 +33,22 @@
         <p class="active-company-empty">Ingen statistik att visa.</p>
       }
     </mat-tab>
+
+    <mat-tab label="Utskrivna Intyg (DO2)">
+      @if (hasPrintedCertificatesData) {
+        <div class="active-company-chart-wrapper">
+          <canvas
+            class="active-company-chart"
+            baseChart
+            [type]="'bar'"
+            [data]="printedCertificatesChartData"
+            [options]="printedCertificatesChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <p class="active-company-empty">Ingen statistik att visa.</p>
+      }
+    </mat-tab>
   </mat-tab-group>
 
   <button class="btn-glow active-company-subtract-button" type="button" (click)="decreaseDisplayLimit()" [disabled]="!canDecreaseDisplayLimit">

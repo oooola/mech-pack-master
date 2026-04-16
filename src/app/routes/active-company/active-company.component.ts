@@ -19,6 +19,7 @@ export class ActiveCompanyComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private sortedUsageEntries: [number, number][] = [];
   private sortedUsersEntries: [number, number][] = [];
+  private sortedPrintedCertificatesEntries: [number, number][] = [];
   private companyNameMap = new Map<number, string>();
   private readonly stepSize = 10;
 
@@ -110,8 +111,52 @@ export class ActiveCompanyComponent implements OnInit {
     },
   };
 
+  printedCertificatesChartData: ChartConfiguration<'bar'>['data'] = {
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        label: 'Utskrivna intyg',
+        backgroundColor: '#2e7d32',
+        borderColor: '#1f5a24',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  printedCertificatesChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    scales: {
+      x: {
+        ticks: {
+          color: '#9aa0a6',
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#9aa0a6',
+          precision: 0,
+        },
+        title: {
+          display: true,
+          text: 'Antal intyg',
+          color: '#9aa0a6',
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+  };
+
   hasUsageData = false;
   hasUsersData = false;
+  hasPrintedCertificatesData = false;
 
   ngOnInit(): void {
     void this.loadChart();
@@ -130,10 +175,12 @@ export class ActiveCompanyComponent implements OnInit {
 
       const totalSecUsedByCompany = new Map<number, number>();
       const uniqueUsersByCompany = new Map<number, Set<number>>();
+      const printedCertificatesByCompany = new Map<number, number>();
       for (const item of stats) {
         const companyId = Number(item?.CompanyId);
         const userId = Number(item?.UserId);
         const secUsed = Number(item?.SecUsed);
+        const appCode = typeof item?.AppCode === 'string' ? item.AppCode.trim().toUpperCase() : '';
 
         if (!Number.isFinite(companyId)) {
           continue;
@@ -148,6 +195,11 @@ export class ActiveCompanyComponent implements OnInit {
           const userSet = uniqueUsersByCompany.get(companyId) ?? new Set<number>();
           userSet.add(userId);
           uniqueUsersByCompany.set(companyId, userSet);
+        }
+
+        if (appCode === 'DO2') {
+          const currentPrintedCertificates = printedCertificatesByCompany.get(companyId) ?? 0;
+          printedCertificatesByCompany.set(companyId, currentPrintedCertificates + 1);
         }
       }
 
@@ -167,12 +219,22 @@ export class ActiveCompanyComponent implements OnInit {
 
           return a[0] - b[0];
         });
+      this.sortedPrintedCertificatesEntries = Array.from(printedCertificatesByCompany.entries()).sort((a, b) => {
+        if (b[1] !== a[1]) {
+          return b[1] - a[1];
+        }
+
+        return a[0] - b[0];
+      });
 
       const allCompanyIds = new Set<number>();
       for (const [companyId] of this.sortedUsageEntries) {
         allCompanyIds.add(companyId);
       }
       for (const [companyId] of this.sortedUsersEntries) {
+        allCompanyIds.add(companyId);
+      }
+      for (const [companyId] of this.sortedPrintedCertificatesEntries) {
         allCompanyIds.add(companyId);
       }
 
@@ -198,11 +260,22 @@ export class ActiveCompanyComponent implements OnInit {
           },
         ],
       };
+      this.printedCertificatesChartData = {
+        labels: [],
+        datasets: [
+          {
+            ...this.printedCertificatesChartData.datasets[0],
+            data: [],
+          },
+        ],
+      };
       this.sortedUsageEntries = [];
       this.sortedUsersEntries = [];
+      this.sortedPrintedCertificatesEntries = [];
       this.companyNameMap = new Map<number, string>();
       this.hasUsageData = false;
       this.hasUsersData = false;
+      this.hasPrintedCertificatesData = false;
     } finally {
       this.cdr.markForCheck();
     }
@@ -229,7 +302,11 @@ export class ActiveCompanyComponent implements OnInit {
   }
 
   get canIncreaseDisplayLimit(): boolean {
-    const maxEntries = Math.max(this.sortedUsageEntries.length, this.sortedUsersEntries.length);
+    const maxEntries = Math.max(
+      this.sortedUsageEntries.length,
+      this.sortedUsersEntries.length,
+      this.sortedPrintedCertificatesEntries.length,
+    );
     return this.displayLimit < maxEntries;
   }
 
@@ -240,6 +317,7 @@ export class ActiveCompanyComponent implements OnInit {
   private applyDisplayLimit(): void {
     const usageEntries = this.sortedUsageEntries.slice(0, this.displayLimit);
     const usersEntries = this.sortedUsersEntries.slice(0, this.displayLimit);
+    const printedCertificatesEntries = this.sortedPrintedCertificatesEntries.slice(0, this.displayLimit);
 
     const usageLabels = usageEntries.map(
       ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
@@ -251,6 +329,10 @@ export class ActiveCompanyComponent implements OnInit {
       ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
     );
     const usersData = usersEntries.map(([, totalUsers]) => totalUsers);
+    const printedCertificatesLabels = printedCertificatesEntries.map(
+      ([companyId]) => this.companyNameMap.get(companyId) || `Företag ${companyId}`,
+    );
+    const printedCertificatesData = printedCertificatesEntries.map(([, totalPrintedCertificates]) => totalPrintedCertificates);
 
     this.usageChartData = {
       labels: usageLabels,
@@ -272,8 +354,19 @@ export class ActiveCompanyComponent implements OnInit {
       ],
     };
 
+    this.printedCertificatesChartData = {
+      labels: printedCertificatesLabels,
+      datasets: [
+        {
+          ...this.printedCertificatesChartData.datasets[0],
+          data: printedCertificatesData,
+        },
+      ],
+    };
+
     this.hasUsageData = usageDataInHours.length > 0;
     this.hasUsersData = usersData.length > 0;
+    this.hasPrintedCertificatesData = printedCertificatesData.length > 0;
   }
 
   private getCompanyNameMap(companyIds: number[]): Map<number, string> {

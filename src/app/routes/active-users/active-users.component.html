@@ -26,6 +26,17 @@
 </mat-tab-group>
 
 <div class="active-users-filters">
+  <mat-form-field class="chart-period-dropdown" appearance="outline">
+    <mat-label>Tidsperiod</mat-label>
+    <mat-select
+      [(value)]="selectedChartPeriodId"
+      (valueChange)="onChartPeriodSelectionChange($event)"
+    >
+      @for (periodOption of chartPeriodOptions; track periodOption.id) {
+        <mat-option [value]="periodOption.id">{{ periodOption.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
   <mat-checkbox
     class="all-programs-checkbox"
     [checked]="showAllPrograms"

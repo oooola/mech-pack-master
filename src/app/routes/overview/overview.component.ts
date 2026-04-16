@@ -148,7 +148,7 @@ export class OverviewComponent implements OnInit {
         }
 
         if (Number.isFinite(secUsed)) {
-          if (appCode.length > 0) {
+          if (appCode.length > 0 && this.globalService.shouldIncludeAppCodeInUsageCharts(appCode)) {
             const currentAppCodeSecUsed = totalSecUsedByAppCode.get(appCode) ?? 0;
             totalSecUsedByAppCode.set(appCode, currentAppCodeSecUsed + secUsed);
           }
