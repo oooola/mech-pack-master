@@ -204,9 +204,14 @@
       }
     </div>
     <div class="company-details-actions">
-      <button class="company-secondary-button" type="button" [disabled]="isUpdating" (click)="onResetAdminPassword()">
-        Återställ Admin lösen
-      </button>
+      <div class="company-details-action-group">
+        <button class="company-secondary-button" type="button" [disabled]="isUpdating" (click)="onResetAdminPassword()">
+          Återställ Admin lösen
+        </button>
+        <button class="company-secondary-button" type="button" [disabled]="isUpdating" (click)="onToggleGroupParticipants()">
+          Deltagare
+        </button>
+      </div>
       <button
         class="company-primary-button"
         type="button"
@@ -219,5 +224,55 @@
         Uppdatera
       </button>
     </div>
+
+    @if (showGroupParticipants) {
+      <section class="company-group-participants">
+        @if (isLoadingGroupParticipants) {
+          <div class="company-group-participants-toolbar">
+            <span class="company-group-current-title">Laddar deltagare...</span>
+          </div>
+          <p class="company-group-participants-empty">Hämtar grupper och aktivitet för företaget.</p>
+        } @else if (selectedGroupName) {
+          <div class="company-group-participants-toolbar">
+            <button class="company-group-back-button" type="button" aria-label="Tillbaka till grupper" title="Tillbaka till grupper" (click)="onBackToGroupList()">
+              <span class="material-icons" aria-hidden="true">arrow_back</span>
+            </button>
+            <span class="company-group-current-title">{{ selectedGroupName }}</span>
+          </div>
+
+          <div class="company-group-participants-header company-group-users-header">
+            <span>Deltagarnamn</span>
+            <span>Aktiv</span>
+          </div>
+          @for (row of selectedGroupUserRows; track row.id) {
+            <div class="company-group-participants-row company-group-users-row">
+              <span>{{ row.participantName }}</span>
+              <span>{{ row.lastActiveLabel }}</span>
+            </div>
+          } @empty {
+            <p class="company-group-participants-empty">Inga deltagare att visa.</p>
+          }
+        } @else {
+          <div class="company-group-participants-toolbar">
+            <span class="company-group-current-title">Grupper</span>
+          </div>
+
+          <div class="company-group-participants-header">
+            <span>Gruppnamn</span>
+            <span>Antal deltagare</span>
+            <span>Aktiv</span>
+          </div>
+          @for (row of companyGroupParticipantRows; track row.groupId) {
+            <button class="company-group-participants-row company-group-select-row" type="button" (click)="onGroupSelect(row.groupId)">
+              <span>{{ row.groupName }}</span>
+              <span>{{ row.participantCount }}</span>
+              <span>{{ row.lastActiveLabel }}</span>
+            </button>
+          } @empty {
+            <p class="company-group-participants-empty">Inga grupper att visa.</p>
+          }
+        }
+      </section>
+    }
   </section>
 }

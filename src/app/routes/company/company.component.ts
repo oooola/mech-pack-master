@@ -6,6 +6,8 @@ import { Company } from '@shared/models/company';
 import { CompanyNames } from '@shared/models/company-names';
 import { CompanySettings } from '@shared/models/company-settings';
 import { License } from '@shared/models/license';
+import { StatsUserTime } from '@shared/models/stats-user-time';
+import { Group } from '@shared/models/group';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { UnsavedChangesDialogComponent } from './unsaved-changes-dialog.component';
 
@@ -17,6 +19,19 @@ interface CompanyDetails {
   licenseStatus: 'Aktiv' | 'Avstängd';
   maxUsers: number;
   licenseExpiresAt: string;
+}
+
+interface CompanyGroupParticipantRow {
+  groupId: number;
+  groupName: string;
+  participantCount: number;
+  lastActiveLabel: string;
+}
+
+interface CompanyGroupUserRow {
+  id: number;
+  participantName: string;
+  lastActiveLabel: string;
 }
 
 @Component({
@@ -37,10 +52,17 @@ export class CompanyComponent implements OnInit, OnDestroy {
   private menuClickSubscription: Subscription | null = null;
   private companyNameEntries: CompanyNames[] = [];
   private selectedCompanyId: number | null = null;
+  private selectedCompanyGroups: Group[] = [];
 
   searchTerm = '';
   isListOpen = true;
   selectedCompanyDetails: CompanyDetails | null = null;
+  companyGroupParticipantRows: CompanyGroupParticipantRow[] = [];
+  selectedGroupName = '';
+  selectedGroupUserRows: CompanyGroupUserRow[] = [];
+  showGroupParticipants = false;
+  hasLoadedGroupParticipants = false;
+  isLoadingGroupParticipants = false;
   originalName: string | null = null;
   originalCustomerNumber: string | null = null;
   originalMaxUsers: number | null = null;
@@ -167,15 +189,82 @@ export class CompanyComponent implements OnInit, OnDestroy {
       this.originalName = this.selectedCompanyDetails.name;
       this.originalCustomerNumber = this.selectedCompanyDetails.customerNumber;
       this.selectedCompanyId = companyId;
+      this.selectedCompanyGroups = companyData.classes;
+      this.companyGroupParticipantRows = [];
+      this.selectedGroupName = '';
+      this.selectedGroupUserRows = [];
+      this.showGroupParticipants = false;
+      this.hasLoadedGroupParticipants = false;
+      this.isLoadingGroupParticipants = false;
       this.hasPendingChanges = false;
       this.licenseStatusDraft = this.selectedCompanyDetails.licenseStatus;
     } catch (error) {
       console.error('Kunde inte hämta företagsdata.', error);
       this.selectedCompanyId = null;
       this.selectedCompanyDetails = null;
+      this.selectedCompanyGroups = [];
+      this.companyGroupParticipantRows = [];
+      this.selectedGroupName = '';
+      this.selectedGroupUserRows = [];
+      this.showGroupParticipants = false;
+      this.hasLoadedGroupParticipants = false;
+      this.isLoadingGroupParticipants = false;
     } finally {
       this.cdr.markForCheck();
     }
+  }
+
+  async onToggleGroupParticipants() {
+    if (!this.selectedCompanyDetails) {
+      return;
+    }
+
+    if (this.showGroupParticipants) {
+      this.showGroupParticipants = false;
+      this.selectedGroupName = '';
+      this.selectedGroupUserRows = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.showGroupParticipants = true;
+    this.selectedGroupName = '';
+    this.selectedGroupUserRows = [];
+
+    if (!this.hasLoadedGroupParticipants) {
+      this.isLoadingGroupParticipants = true;
+      this.cdr.markForCheck();
+
+      try {
+        const stats = await this.getStatsUserTime();
+        this.companyGroupParticipantRows = this.buildCompanyGroupParticipantRows(this.selectedCompanyGroups, stats);
+      } catch (statsError) {
+        console.error('Kunde inte hämta aktivitetsdata för grupper.', statsError);
+        this.companyGroupParticipantRows = this.buildCompanyGroupParticipantRows(this.selectedCompanyGroups, []);
+      } finally {
+        this.isLoadingGroupParticipants = false;
+        this.hasLoadedGroupParticipants = true;
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  onGroupSelect(groupId: number) {
+    const selectedGroup = this.companyGroupParticipantRows.find(group => group.groupId === groupId);
+    if (!selectedGroup) {
+      return;
+    }
+
+    this.selectedGroupName = selectedGroup.groupName;
+    this.selectedGroupUserRows = this.buildGroupUserRows(groupId);
+  }
+
+  onBackToGroupList() {
+    this.selectedGroupName = '';
+    this.selectedGroupUserRows = [];
   }
 
   async onCopyLicenseKey(): Promise<void> {
@@ -645,6 +734,13 @@ export class CompanyComponent implements OnInit, OnDestroy {
   private resetEditState() {
     this.selectedCompanyId = null;
     this.selectedCompanyDetails = null;
+    this.selectedCompanyGroups = [];
+    this.companyGroupParticipantRows = [];
+    this.selectedGroupName = '';
+    this.selectedGroupUserRows = [];
+    this.showGroupParticipants = false;
+    this.hasLoadedGroupParticipants = false;
+    this.isLoadingGroupParticipants = false;
     this.originalName = null;
     this.originalCustomerNumber = null;
     this.originalMaxUsers = null;
@@ -662,6 +758,180 @@ export class CompanyComponent implements OnInit, OnDestroy {
     this.maxUsersDraft = '';
     this.licenseExpiresAtDraft = '';
     this.licenseStatusDraft = 'Aktiv';
+  }
+
+  private async getStatsUserTime(): Promise<StatsUserTime[]> {
+    let stats = this.globalService.getStatsUserTime();
+    if (stats.length > 0) {
+      return stats;
+    }
+
+    const jwt = this.globalService.getJwt();
+    if (jwt === 'NO-JWT-FOUND' || jwt === 'JWT-EXPIRED') {
+      return [];
+    }
+
+    const response = await this.backendService.getStatUserTime(jwt);
+    stats = this.normalizeStatsUserTimeList(response);
+    this.globalService.setStatsUserTime(stats);
+    return stats;
+  }
+
+  private buildCompanyGroupParticipantRows(groups: Group[], stats: StatsUserTime[]): CompanyGroupParticipantRow[] {
+    const statsByUserId = new Map<number, StatsUserTime[]>();
+    for (const item of stats) {
+      const userId = Number(item?.UserId);
+      const companyId = Number(item?.CompanyId);
+      if (
+        !Number.isFinite(userId) ||
+        !Number.isFinite(companyId) ||
+        companyId !== this.selectedCompanyId
+      ) {
+        continue;
+      }
+
+      const items = statsByUserId.get(userId) ?? [];
+      items.push(item);
+      statsByUserId.set(userId, items);
+    }
+
+    return [...groups]
+      .sort((a, b) => a.Name.localeCompare(b.Name, 'sv'))
+      .map(group => {
+        const participantCount = group.Users.length;
+        let latestActivityTs = 0;
+
+        for (const user of group.Users) {
+          const userStats = statsByUserId.get(user.id) ?? [];
+          for (const stat of userStats) {
+            const endTs = Number(stat?.EndTS);
+            const startTs = Number(stat?.StartTS);
+            const activityTs = Number.isFinite(endTs) && endTs > 0 ? endTs : startTs;
+            if (Number.isFinite(activityTs)) {
+              latestActivityTs = Math.max(latestActivityTs, activityTs);
+            }
+          }
+        }
+
+        return {
+          groupId: group.id,
+          groupName: group.Name || '-',
+          participantCount,
+          lastActiveLabel: latestActivityTs > 0
+            ? this.formatRelativeActivity(latestActivityTs)
+            : 'Aldrig',
+        };
+      });
+  }
+
+  private buildGroupUserRows(groupId: number): CompanyGroupUserRow[] {
+    if (!this.selectedCompanyId) {
+      return [];
+    }
+
+    const statsByUserId = new Map<number, number>();
+    for (const item of this.globalService.getStatsUserTime()) {
+      const userId = Number(item?.UserId);
+      const companyId = Number(item?.CompanyId);
+      if (!Number.isFinite(userId) || !Number.isFinite(companyId) || companyId !== this.selectedCompanyId) {
+        continue;
+      }
+
+      const endTs = Number(item?.EndTS);
+      const startTs = Number(item?.StartTS);
+      const activityTs = Number.isFinite(endTs) && endTs > 0 ? endTs : startTs;
+      if (Number.isFinite(activityTs)) {
+        statsByUserId.set(userId, Math.max(statsByUserId.get(userId) ?? 0, activityTs));
+      }
+    }
+
+    const selectedGroup = this.selectedCompanyGroups.find(group => group.id === groupId);
+    if (!selectedGroup) {
+      return [];
+    }
+
+    return [...selectedGroup.Users]
+      .map(user => {
+        const displayName = user.Name.trim() || user.Username.trim() || `Användare ${user.id}`;
+        const latestActivityTs = statsByUserId.get(user.id) ?? 0;
+
+        return {
+          id: user.id,
+          participantName: displayName,
+          lastActiveLabel: latestActivityTs > 0 ? this.formatRelativeActivity(latestActivityTs) : 'Aldrig',
+        };
+      })
+      .sort((a, b) => a.participantName.localeCompare(b.participantName, 'sv'));
+  }
+
+  private formatRelativeActivity(activityTs: number): string {
+    const nowTs = Date.now() / 1000;
+    const diffSeconds = Math.max(0, Math.floor(nowTs - activityTs));
+
+    if (diffSeconds < 24 * 60 * 60) {
+      return 'Idag';
+    }
+
+    const diffDays = Math.floor(diffSeconds / (24 * 60 * 60));
+    if (diffDays < 7) {
+      return diffDays === 1 ? '1 dag sedan' : `${diffDays} dagar sedan`;
+    }
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffDays < 30) {
+      return diffWeeks === 1 ? '1 vecka sedan' : `${diffWeeks} veckor sedan`;
+    }
+
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffDays < 365) {
+      return diffMonths === 1 ? '1 månad sedan' : `${diffMonths} månader sedan`;
+    }
+
+    const diffYears = Math.floor(diffDays / 365);
+    return diffYears === 1 ? '1 år sedan' : `${diffYears} år sedan`;
+  }
+
+  private normalizeStatsUserTimeList(response: unknown): StatsUserTime[] {
+    if (!Array.isArray(response)) {
+      return [];
+    }
+
+    const statsList: StatsUserTime[] = [];
+    for (const item of response) {
+      const userId = Number((item as Partial<StatsUserTime>)?.UserId);
+      const companyId = Number((item as Partial<StatsUserTime>)?.CompanyId);
+      const secUsed = Number((item as Partial<StatsUserTime>)?.SecUsed);
+      const startTs = Number((item as Partial<StatsUserTime>)?.StartTS);
+      const endTs = Number((item as Partial<StatsUserTime>)?.EndTS);
+      const appCode = typeof (item as Partial<StatsUserTime>)?.AppCode === 'string'
+        ? ((item as Partial<StatsUserTime>).AppCode as string).trim()
+        : '';
+      const platform = typeof (item as Partial<StatsUserTime>)?.Platform === 'string'
+        ? ((item as Partial<StatsUserTime>).Platform as string).trim()
+        : '';
+
+      if (
+        !Number.isFinite(userId) ||
+        !Number.isFinite(companyId) ||
+        !Number.isFinite(secUsed) ||
+        !Number.isFinite(startTs) ||
+        !Number.isFinite(endTs)
+      ) {
+        continue;
+      }
+
+      const stats = new StatsUserTime();
+      stats.UserId = userId;
+      stats.CompanyId = companyId;
+      stats.AppCode = appCode;
+      stats.Platform = platform;
+      stats.SecUsed = secUsed;
+      stats.StartTS = startTs;
+      stats.EndTS = endTs;
+      statsList.push(stats);
+    }
+
+    return statsList;
   }
 
   private confirmDiscardChangesIfNeeded() {
