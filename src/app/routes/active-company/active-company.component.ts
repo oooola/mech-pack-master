@@ -197,9 +197,9 @@ export class ActiveCompanyComponent implements OnInit {
           uniqueUsersByCompany.set(companyId, userSet);
         }
 
-        if (appCode === 'DO2') {
+        if (appCode === 'DO2' && Number.isFinite(secUsed)) {
           const currentPrintedCertificates = printedCertificatesByCompany.get(companyId) ?? 0;
-          printedCertificatesByCompany.set(companyId, currentPrintedCertificates + 1);
+          printedCertificatesByCompany.set(companyId, currentPrintedCertificates + (secUsed / 120));
         }
       }
 
