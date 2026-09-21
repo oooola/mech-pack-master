@@ -12,3 +12,42 @@ Kill process vid upptagen port
 lsof -i :4200
 Hitta PID  
 kill -9 1453
+
+RELEASE
+=======
+
+1.4 Ändra från debug API local till riktiga
+===========================================
+
+private baseUrl = 'https://vpsapi.mechapp.se';
+private baseUrl = 'http://localhost:5286';
+
+
+1.5 Uppdatera verionsnummer
+===========================
+
+Ändra verion i: 
+global.service.ts -> getBuildVersion()
+
+
+
+2. Kompilera för release
+========================
+
+npx ng build --configuration production
+Resultat i:
+.\dist\cnc-simulator-turn\browser
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
