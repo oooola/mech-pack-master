@@ -630,6 +630,7 @@ export class CompanyComponent implements OnInit, OnDestroy {
       const settings = new CompanySettings();
       settings.Key = companyKey;
       settings.id = this.selectedCompanyId;
+      settings.Masterblock = this.selectedCompanyDetails.licenseStatus === 'Avstängd';
 
       const hasMaxUsersChanges =
         this.originalMaxUsers !== null && this.selectedCompanyDetails.maxUsers !== this.originalMaxUsers;
@@ -659,6 +660,8 @@ export class CompanyComponent implements OnInit, OnDestroy {
       }
 
       await this.backendService.setCompanySettings(settings, jwt);
+
+      this.originalLicenseStatus = this.selectedCompanyDetails.licenseStatus;
 
       if (hasMaxUsersChanges) {
         this.originalMaxUsers = this.selectedCompanyDetails.maxUsers;
