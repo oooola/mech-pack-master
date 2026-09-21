@@ -1,0 +1,14 @@
+
+Node version
+=========================
+nvm use 22
+
+Kör
+=========================
+npx ng serve
+
+Kill process vid upptagen port
+=========================
+lsof -i :4200
+Hitta PID  
+kill -9 1453
