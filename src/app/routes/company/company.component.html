@@ -211,6 +211,24 @@
         <button class="company-secondary-button" type="button" [disabled]="isUpdating" (click)="onToggleGroupParticipants()">
           Deltagare
         </button>
+        <button class="company-secondary-button" type="button"
+          [disabled]="isUpdating || creatingLoginPdf !== null || !selectedCompanyDetails.name || !selectedCompanyDetails.licenseKey"
+          [attr.aria-busy]="creatingLoginPdf === 'Lärare'"
+          (click)="onDownloadLoginPdf('Lärare')">
+          @if (creatingLoginPdf === 'Lärare') {
+            <span class="company-button-spinner" aria-hidden="true"></span>
+          }
+          PDF Login Lärare
+        </button>
+        <button class="company-secondary-button" type="button"
+          [disabled]="isUpdating || creatingLoginPdf !== null || !selectedCompanyDetails.name || !selectedCompanyDetails.licenseKey || !selectedCompanyDetails.pinCode"
+          [attr.aria-busy]="creatingLoginPdf === 'Elev'"
+          (click)="onDownloadLoginPdf('Elev')">
+          @if (creatingLoginPdf === 'Elev') {
+            <span class="company-button-spinner" aria-hidden="true"></span>
+          }
+          PDF Login Elev
+        </button>
       </div>
       <button
         class="company-primary-button"
@@ -224,6 +242,10 @@
         Uppdatera
       </button>
     </div>
+
+    @if (loginPdfError) {
+      <p class="company-pdf-error" role="alert">{{ loginPdfError }}</p>
+    }
 
     @if (showGroupParticipants) {
       <section class="company-group-participants">

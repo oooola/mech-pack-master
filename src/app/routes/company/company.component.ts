@@ -70,6 +70,8 @@ export class CompanyComponent implements OnInit, OnDestroy {
   originalLicenseStatus: CompanyDetails['licenseStatus'] | null = null;
   hasPendingChanges = false;
   isUpdating = false;
+  creatingLoginPdf: 'Lärare' | 'Elev' | null = null;
+  loginPdfError = '';
   isEditingName = false;
   isEditingCustomerNumber = false;
   isEditingMaxUsers = false;
@@ -269,6 +271,52 @@ export class CompanyComponent implements OnInit, OnDestroy {
 
   async onCopyLicenseKey(): Promise<void> {
     await this.onCopyText(this.selectedCompanyDetails?.licenseKey ?? '');
+  }
+
+  async onDownloadLoginPdf(audience: 'Lärare' | 'Elev'): Promise<void> {
+    if (this.isEditingName) {
+      this.onNameSave();
+    }
+    const company = this.selectedCompanyDetails;
+    if (!company?.name || !company.licenseKey || (audience === 'Elev' && !company.pinCode) || this.creatingLoginPdf) {
+      return;
+    }
+
+    const { name, licenseKey, pinCode } = company;
+    this.creatingLoginPdf = audience;
+    this.loginPdfError = '';
+    this.cdr.markForCheck();
+
+    try {
+      const templateName = audience === 'Elev' ? 'COMPANY-NAME-Login-Elev.pdf' : 'COMPANY-NAME-Login-Lärare-.pdf';
+      const templateUrl = new URL(`pdf-templates/${templateName}`, document.baseURI);
+      const [response, pdf] = await Promise.all([
+        fetch(templateUrl),
+        import('./login-pdf'),
+      ]);
+      if (!response.ok) {
+        throw new Error(`Kunde inte hämta PDF-mallen (${response.status}).`);
+      }
+
+      const bytes = await pdf.createLoginPdf(await response.arrayBuffer(), name, licenseKey, audience === 'Elev' ? pinCode : undefined);
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = pdf.loginFilename(name, audience);
+      document.body.appendChild(link);
+      try {
+        link.click();
+      } finally {
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+    } catch (error) {
+      console.error(`Kunde inte skapa PDF för ${audience.toLocaleLowerCase('sv')}.`, error);
+      this.loginPdfError = 'Kunde inte skapa PDF-filen. Försök igen.';
+    } finally {
+      this.creatingLoginPdf = null;
+      this.cdr.markForCheck();
+    }
   }
 
   async onCopyText(value: string): Promise<void> {

@@ -261,6 +261,9 @@
 }
 
 .company-column-headers button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 0;
   border: 0;
   color: inherit;
@@ -272,8 +275,24 @@
 }
 
 .company-column-headers button:last-child {
+  justify-content: flex-end;
   border-left: 1px solid var(--mat-sys-outline-variant, #555);
   text-align: right;
+}
+
+.company-sort-chevron {
+  width: 8px;
+  height: 8px;
+  margin: -4px 3px 0 0;
+  border-right: 3px solid currentColor;
+  border-bottom: 3px solid currentColor;
+  flex-shrink: 0;
+  transform: rotate(45deg);
+}
+
+.company-sort-chevron-up {
+  margin-top: 4px;
+  transform: rotate(225deg);
 }
 
 .company-options {

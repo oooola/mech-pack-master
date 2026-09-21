@@ -92,11 +92,17 @@
     <div class="company-option-row company-column-headers">
       <button type="button" (click)="sortCompanyOptions('name')"
         [attr.aria-pressed]="companySort === 'name'">
-        Namn <span aria-hidden="true">{{ companySort === 'name' ? '↑' : '' }}</span>
+        Namn
+        @if (companySort === 'name') {
+          <span class="company-sort-chevron company-sort-chevron-up" aria-hidden="true"></span>
+        }
       </button>
       <button type="button" (click)="sortCompanyOptions('time')"
         [attr.aria-pressed]="companySort === 'time'">
-        Användartid <span aria-hidden="true">{{ companySort === 'time' ? '↓' : '' }}</span>
+        Användartid
+        @if (companySort === 'time') {
+          <span class="company-sort-chevron" aria-hidden="true"></span>
+        }
       </button>
     </div>
 <details class="company-dropdown" #companyDropdown

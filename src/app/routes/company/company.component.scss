@@ -101,6 +101,12 @@
   flex-wrap: wrap;
 }
 
+.company-pdf-error {
+  margin: 0;
+  padding: 0 16px 12px;
+  color: var(--mat-sys-error, #b3261e);
+}
+
 .company-details-label {
   color: rgba(0, 0, 0, 0.6);
   font-weight: 500;
