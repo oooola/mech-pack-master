@@ -88,25 +88,42 @@
   </mat-checkbox>
 </div>
 
-<mat-form-field class="company-dropdown" appearance="outline">
-  <mat-label>Företag</mat-label>
-  <mat-select [(value)]="selectedCompanyId" (valueChange)="onCompanySelectionChange($event)">
-    <mat-select-trigger>
-      <div class="company-option-row company-option-row-trigger">
-        <span class="company-option-name">{{ selectedCompanyOption?.companyLabel }}</span>
-        <span class="company-option-minutes">{{ selectedCompanyOption?.hoursLabel }}</span>
-      </div>
-    </mat-select-trigger>
-    @for (companyOption of companyOptions; track companyOption.id) {
-      <mat-option [value]="companyOption.id">
-        <div class="company-option-row">
+<div class="company-picker">
+    <div class="company-option-row company-column-headers">
+      <button type="button" (click)="sortCompanyOptions('name')"
+        [attr.aria-pressed]="companySort === 'name'">
+        Namn <span aria-hidden="true">{{ companySort === 'name' ? '↑' : '' }}</span>
+      </button>
+      <button type="button" (click)="sortCompanyOptions('time')"
+        [attr.aria-pressed]="companySort === 'time'">
+        Användartid <span aria-hidden="true">{{ companySort === 'time' ? '↓' : '' }}</span>
+      </button>
+    </div>
+<details class="company-dropdown" #companyDropdown
+  (keydown.escape)="closeCompanyDropdown(companyDropdown)"
+  (focusout)="onCompanyDropdownFocusOut($event, companyDropdown)">
+  <summary aria-label="Företag">
+    <span class="company-option-row company-option-row-trigger">
+      <span class="company-option-name">{{ selectedCompanyOption?.companyLabel }}</span>
+      <span class="company-option-hours">{{ selectedCompanyOption?.hoursLabel }}</span>
+    </span>
+    <span class="company-dropdown-arrow" aria-hidden="true">▾</span>
+  </summary>
+  <div class="company-dropdown-panel">
+    <div class="company-options" role="listbox" aria-label="Företag"
+      (keydown)="onCompanyOptionsKeydown($event)">
+      @for (companyOption of companyOptions; track companyOption.id) {
+        <button type="button" class="company-option-row company-option" role="option"
+          [attr.aria-selected]="companyOption.id === selectedCompanyId"
+          (click)="onCompanySelectionChange(companyOption.id); closeCompanyDropdown(companyDropdown)">
           <span class="company-option-name">{{ companyOption.companyLabel }}</span>
-          <span class="company-option-minutes">{{ companyOption.hoursLabel }}</span>
-        </div>
-      </mat-option>
-    }
-  </mat-select>
-</mat-form-field>
+          <span class="company-option-hours">{{ companyOption.hoursLabel }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</details>
+</div>
 
 <section class="active-users-summary-card">
   <table class="active-users-summary-table">

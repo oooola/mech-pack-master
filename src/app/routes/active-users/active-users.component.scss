@@ -131,10 +131,11 @@
   color: #8e24aa;
 }
 
-.company-dropdown {
+.company-picker {
   display: block;
   width: min(100%, 560px);
-  --mdc-outlined-text-field-container-shape: var(--mat-sys-corner-medium);
+  position: relative;
+  color: var(--mat-sys-on-surface, #e3e3e3);
 }
 
 .active-users-summary-card {
@@ -177,21 +178,22 @@
 
 .company-option-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(0, 1fr) 150px;
   align-items: center;
   column-gap: 12px;
   width: 100%;
 }
 
 .company-option-row-trigger {
-  padding-right: 18px;
+  padding-right: 0;
+  box-sizing: border-box;
 }
 
 .company-option-name {
   min-width: 0;
 }
 
-.company-option-minutes {
+.company-option-hours {
   text-align: right;
   justify-self: end;
   white-space: nowrap;
@@ -209,5 +211,117 @@
   .chart-period-dropdown {
     flex-basis: 100%;
     width: min(100%, 280px);
+  }
+}
+
+.company-dropdown summary {
+  position: relative;
+  padding: 18px 44px 18px 16px;
+  border: 1px solid var(--mat-sys-outline, #9aa0a6);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.company-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.company-dropdown-arrow {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+}
+
+.company-dropdown[open] .company-dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.company-dropdown-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline, #9aa0a6);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container, #252525);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 25%);
+  box-sizing: border-box;
+}
+
+.company-column-headers {
+  padding: 0 44px 0 16px;
+  border: 1px solid var(--mat-sys-outline, #9aa0a6);
+  border-radius: 8px 8px 0 0;
+  background: var(--mat-sys-surface-container-high, #303030);
+  box-sizing: border-box;
+}
+
+.company-column-headers button {
+  padding: 12px 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.company-column-headers button:last-child {
+  border-left: 1px solid var(--mat-sys-outline-variant, #555);
+  text-align: right;
+}
+
+.company-options {
+  max-height: min(360px, 50vh);
+  overflow-y: auto;
+}
+
+.company-option {
+  padding: 11px 44px 11px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #444);
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.company-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-option-hours {
+  font-variant-numeric: tabular-nums;
+}
+
+.company-option:hover,
+.company-column-headers button:hover {
+  background: var(--mat-sys-surface-container-highest, #383838);
+}
+
+.company-option[aria-selected='true'] {
+  color: var(--mat-sys-on-secondary-container, #fff);
+  background: var(--mat-sys-secondary-container, #374b65);
+  font-weight: 600;
+}
+
+.company-dropdown summary:focus-visible,
+.company-picker button:focus-visible {
+  outline: 2px solid var(--mat-sys-primary, #90caf9);
+  outline-offset: -2px;
+}
+
+@media (width <= 480px) {
+  .company-option-row {
+    grid-template-columns: minmax(0, 1fr) 125px;
+    column-gap: 8px;
   }
 }

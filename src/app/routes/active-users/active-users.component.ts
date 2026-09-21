@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,6 +13,7 @@ type CompanyOption = {
   id: number | 'all';
   companyLabel: string;
   hoursLabel: string;
+  totalSeconds: number;
 };
 
 type SummaryRow = {
@@ -43,10 +44,12 @@ export class ActiveUsersComponent implements OnInit {
   showMekmat = false;
   selectedTabIndex = 0;
   selectedCompanyId: number | 'all' = 'all';
+  companySort: 'name' | 'time' = 'time';
+  @ViewChild('companyDropdown') private companyDropdown?: ElementRef<HTMLDetailsElement>;
   selectedChartPeriodId: ChartPeriodOption['id'] = '1m';
   summaryRows: SummaryRow[] = [];
   companyOptions: CompanyOption[] = [
-    { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
+    { id: 'all', companyLabel: 'Alla företag', hoursLabel: '', totalSeconds: 0 },
   ];
   chartPeriodOptions: ChartPeriodOption[] = [
     { id: '1w', label: '1 vecka' },
@@ -340,6 +343,50 @@ export class ActiveUsersComponent implements OnInit {
     this.selectedCompanyId = selectedCompanyId;
     this.updateChartForSelection();
     this.cdr.markForCheck();
+  }
+
+  sortCompanyOptions(sort: 'name' | 'time', updateChart = true): void {
+    this.companySort = sort;
+    this.companyOptions = [...this.companyOptions].sort((a, b) => {
+      if (a.id === 'all') return -1;
+      if (b.id === 'all') return 1;
+      const byName = a.companyLabel.localeCompare(b.companyLabel, 'sv');
+      return sort === 'name' ? byName : b.totalSeconds - a.totalSeconds || byName;
+    });
+    this.selectedCompanyId = this.companyOptions.find(option => option.id !== 'all')?.id ?? 'all';
+    if (updateChart) {
+      this.onCompanySelectionChange(this.selectedCompanyId);
+    }
+  }
+
+  closeCompanyDropdown(dropdown: HTMLDetailsElement): void {
+    dropdown.open = false;
+    dropdown.querySelector('summary')?.focus();
+  }
+
+  onCompanyDropdownFocusOut(event: FocusEvent, dropdown: HTMLDetailsElement): void {
+    if (event.relatedTarget instanceof Node && !dropdown.parentElement?.contains(event.relatedTarget)) {
+      dropdown.open = false;
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const dropdown = this.companyDropdown?.nativeElement;
+    if (dropdown && event.target instanceof Node && !dropdown.parentElement?.contains(event.target)) {
+      dropdown.open = false;
+    }
+  }
+
+  onCompanyOptionsKeydown(event: KeyboardEvent): void {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    const list = event.currentTarget as HTMLElement;
+    const options = Array.from(list.querySelectorAll<HTMLButtonElement>('[role="option"]'));
+    const current = options.indexOf(event.target as HTMLButtonElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+      : Math.max(0, Math.min(options.length - 1, current + (event.key === 'ArrowDown' ? 1 : -1)));
+    event.preventDefault();
+    options[next]?.focus();
   }
 
   onChartPeriodSelectionChange(selectedChartPeriodId: ChartPeriodOption['id']) {
@@ -725,17 +772,18 @@ export class ActiveUsersComponent implements OnInit {
     const companyNameMap = this.getCompanyNameMap(sortedCompanyEntries.map(([companyId]) => companyId));
 
     this.companyOptions = [
-      { id: 'all', companyLabel: 'Alla företag', hoursLabel: '' },
+      { id: 'all', companyLabel: 'Alla företag', hoursLabel: '', totalSeconds: 0 },
       ...sortedCompanyEntries.map(([companyId, totalSecUsed]) => {
         const totalHours = Math.round(totalSecUsed / 3600);
         return {
           id: companyId,
           companyLabel: companyNameMap.get(companyId) || `Företag ${companyId}`,
-          hoursLabel: `Timmar: ${totalHours}`,
+          hoursLabel: `${totalHours.toLocaleString('sv-SE')} h`,
+          totalSeconds: totalSecUsed,
         };
       }),
     ];
-    this.selectedCompanyId = 'all';
+    this.sortCompanyOptions(this.companySort, false);
   }
 
   // Hämtar en uppslagstabell med företagsnamn per företags-id från global cache.
